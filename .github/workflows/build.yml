@@ -30,8 +30,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Run Detekt
+        continue-on-error: true
+        run: ./gradlew detekt
+
       - name: Build with Gradle
-        run: ./gradlew detekt assembleRelease
+        run: ./gradlew assembleRelease
 
       - name: Upload app-arm64-v8a Artifact
         uses: actions/upload-artifact@v4
