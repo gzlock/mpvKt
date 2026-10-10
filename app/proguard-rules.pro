@@ -21,3 +21,8 @@
 #-renamesourcefileattribute SourceFile
 -dontobfuscate
 -keep,allowoptimization class is.xyz.mpv.** { public protected *; }
+
+# Optional integrations referenced by SMBJ and its event bus are not available
+# on Android. The app uses password/anonymous SMB authentication, not SPNEGO.
+-dontwarn javax.el.**
+-dontwarn org.ietf.jgss.**
