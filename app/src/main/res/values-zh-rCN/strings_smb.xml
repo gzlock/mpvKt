@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="smb_profiles_title">SMB 网络共享</string>
+    <string name="smb_profiles_summary">已保存的 SMB 连接</string>
+    <string name="smb_browser_title">SMB 浏览器</string>
+    <string name="smb_add_profile">添加 SMB 连接</string>
+    <string name="smb_edit_profile">编辑 SMB 连接</string>
+    <string name="smb_delete_profile">删除 SMB 连接</string>
+    <string name="smb_no_profiles">没有已保存的 SMB 连接。</string>
+    <string name="smb_name">名称</string>
+    <string name="smb_host">主机</string>
+    <string name="smb_port">端口</string>
+    <string name="smb_share">共享名</string>
+    <string name="smb_start_path">起始路径（可选）</string>
+    <string name="smb_username">用户名</string>
+    <string name="smb_domain">域/工作组</string>
+    <string name="smb_password">密码</string>
+    <string name="smb_anonymous">匿名访问</string>
+    <string name="smb_test">测试</string>
+    <string name="smb_save">保存</string>
+    <string name="smb_connection_ok">连接成功</string>
+    <string name="smb_connection_failed">连接失败</string>
+    <string name="smb_sort">排序</string>
+    <string name="smb_sort_current">排序：%1$s</string>
+    <string name="smb_sort_name_asc">文件名（正序）</string>
+    <string name="smb_sort_name_desc">文件名（倒序）</string>
+    <string name="smb_sort_modified_asc">修改时间（最早）</string>
+    <string name="smb_sort_modified_desc">修改时间（最新）</string>
+    <string name="smb_profile_not_found">未找到 SMB 配置</string>
+    <string name="smb_unable_access">无法访问 SMB 共享</string>
+    <string name="smb_unable_open">无法打开 SMB 文件</string>
+    <string name="smb_no_shares">未找到可用的共享文件夹。请重试，或手动输入共享名。</string>
+    <string name="smb_retry">重试</string>
+    <string name="smb_enter_share_manually">手动输入共享名</string>
+    <string name="smb_share_name_hint">共享名</string>
+    <string name="smb_open_share">打开</string>
+    <string name="smb_parent_directory">上级目录</string>
+    <string name="pref_player_repeat_playlist">重播播放列表</string>
+    <string name="player_sheets_add_smb_sub">添加 SMB 字幕</string>
+    <string name="player_playlist_title">播放列表</string>
+    <string name="player_playlist_empty">播放列表为空</string>
+</resources>

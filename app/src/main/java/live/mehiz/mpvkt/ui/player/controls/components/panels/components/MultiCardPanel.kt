@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -38,6 +40,8 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import live.mehiz.mpvkt.R
 import androidx.constraintlayout.compose.ConstraintLayout
 import live.mehiz.mpvkt.ui.player.controls.CARDS_MAX_WIDTH
 import live.mehiz.mpvkt.ui.theme.spacing
@@ -122,6 +126,23 @@ fun MultiCardPanel(
         repeat(cardCount) { cards(it, Modifier) }
         Spacer(Modifier.height(16.dp))
       }
+    }
+  }
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 800)
+@Composable
+private fun MultiCardPanelPreview() {
+  MultiCardPanel(
+    onDismissRequest = {},
+    titleRes = R.string.player_sheets_video_settings_title,
+    cardCount = 2,
+  ) { index, modifier ->
+    Card(modifier) {
+      Text(
+        text = if (index == 0) "Picture adjustments" else "Debanding",
+        modifier = Modifier.padding(24.dp),
+      )
     }
   }
 }

@@ -36,6 +36,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import `is`.xyz.mpv.MPVLib
@@ -331,6 +332,19 @@ fun DoubleTapToSeekOvals(
       }
     }
   }
+}
+
+@Preview(showBackground = true, widthDp = 480, heightDp = 280)
+@Composable
+private fun DoubleTapToSeekOvalsPreview() {
+  DoubleTapToSeekOvals(
+    amount = 10,
+    text = "+10 s",
+    showOvals = true,
+    showSeekIcon = true,
+    showSeekTime = true,
+    interactionSource = remember { MutableInteractionSource() },
+  )
 }
 
 fun calculateNewVerticalGestureValue(originalValue: Int, startingY: Float, newY: Float, sensitivity: Float): Int {

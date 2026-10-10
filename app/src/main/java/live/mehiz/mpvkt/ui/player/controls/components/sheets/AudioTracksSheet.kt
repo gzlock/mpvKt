@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.ImmutableList
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.ui.player.TrackNode
@@ -82,4 +84,29 @@ fun AudioTrackRow(
       fontStyle = if (isSelected) FontStyle.Italic else FontStyle.Normal,
     )
   }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AudioTrackRowPreview() {
+  AudioTrackRow(
+    title = "Stereo · English",
+    isSelected = true,
+    onClick = {},
+  )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AudioTracksSheetPreview() {
+  AudioTracksSheet(
+    tracks = persistentListOf(
+      TrackNode(id = 1, type = "audio", title = "Stereo", lang = "English", selected = true),
+      TrackNode(id = 2, type = "audio", title = "5.1 Surround", lang = "Japanese"),
+    ),
+    onSelect = {},
+    onAddAudioTrack = {},
+    onOpenDelayPanel = {},
+    onDismissRequest = {},
+  )
 }

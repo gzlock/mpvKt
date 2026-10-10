@@ -1,6 +1,9 @@
+import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.FilterConfiguration
 import io.gitlab.arturbosch.detekt.Detekt
-import org.apache.commons.io.output.ByteArrayOutputStream
+import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import org.gradle.kotlin.dsl.configure
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.ksp)
@@ -8,21 +11,26 @@ plugins {
   alias(libs.plugins.jetbrains.kotlin.android)
   alias(libs.plugins.kotlin.compose.compiler)
   alias(libs.plugins.room)
-  alias(libs.plugins.detekt)
+  alias(libs.plugins.detekt) apply false
   alias(libs.plugins.about.libraries)
   alias(libs.plugins.kotlinx.serialization)
 }
 
-android {
+if (gradle.startParameter.taskNames.any { it.substringAfterLast(':').startsWith("detekt") }) {
+  apply(plugin = "io.gitlab.arturbosch.detekt")
+}
+
+extensions.configure<ApplicationExtension> {
   namespace = "live.mehiz.mpvkt"
-  compileSdk = 36
+  compileSdk = 37
+  compileSdkMinor = 2
 
   defaultConfig {
-    applicationId = "live.mehiz.mpvkt"
-    minSdk = 21
-    targetSdk = 36
-    versionCode = 12
-    versionName = "0.1.6"
+    applicationId = "com.gzlock.mpvkt"
+    minSdk = 24
+    targetSdk = 37
+    versionCode = 13
+    versionName = "0.1.7"
 
     vectorDrawables {
       useSupportLibrary = true
@@ -65,9 +73,6 @@ android {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
   }
-  kotlinOptions {
-    jvmTarget = "17"
-  }
   buildFeatures {
     compose = true
     viewBinding = true
@@ -98,12 +103,7 @@ android {
   androidResources {
     generateLocaleConfig = true
   }
-}
-
-kotlin {
-  compilerOptions {
-    freeCompilerArgs.addAll("-Xwhen-guards", "-Xcontext-parameters")
-  }
+  buildToolsVersion = "37.0.0"
 }
 
 room {
@@ -111,6 +111,8 @@ room {
 }
 
 dependencies {
+  testImplementation(libs.junit)
+
   implementation(libs.androidx.activity.compose)
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.ui)
@@ -143,43 +145,53 @@ dependencies {
   ksp(libs.room.compiler)
   implementation(libs.room.ktx)
 
-  implementation(libs.detekt.gradle.plugin)
-  detektPlugins(libs.detekt.rules.compose)
-  detektPlugins(libs.detekt.formatter)
-
   implementation(libs.kotlinx.immutable.collections)
   implementation(libs.kotlinx.serialization.json)
   implementation(libs.truetype.parser)
   implementation(libs.fsaf)
+  implementation(libs.jcifs)
+  implementation(libs.smbj)
 }
 
-detekt {
-  parallel = true
-  allRules = false
-  buildUponDefaultConfig = true
-  config.setFrom("$rootDir/config/detekt/detekt.yml")
+pluginManager.withPlugin("io.gitlab.arturbosch.detekt") {
+  extensions.configure<DetektExtension> {
+    parallel = true
+    allRules = false
+    buildUponDefaultConfig = true
+    config.setFrom("$rootDir/config/detekt/detekt.yml")
+  }
+
+  dependencies {
+    add("detektPlugins", libs.detekt.rules.compose)
+    add("detektPlugins", libs.detekt.formatter)
+  }
+
+  tasks.withType<Detekt>().configureEach {
+    jvmTarget = "17"
+    setSource(files(project.projectDir))
+    exclude("**/build/**")
+    reports {
+      html.required.set(true)
+      md.required.set(true)
+    }
+  }
 }
 
-tasks.withType<Detekt>().configureEach {
-  setSource(files(project.projectDir))
-  exclude("**/build/**")
-  reports {
-    html.required.set(true)
-    md.required.set(true)
+kotlin {
+  compilerOptions {
+    jvmTarget.set(JvmTarget.JVM_17)
+    freeCompilerArgs.addAll("-Xwhen-guards", "-Xcontext-parameters")
   }
 }
 
 fun getCommitCount(): String = runCommand("git rev-list --count HEAD")
 fun getCommitSha(): String = runCommand("git rev-parse --short HEAD")
-fun runCommand(command: String): String {
-  val stdOut = ByteArrayOutputStream()
-  exec {
-    commandLine = command.split(' ')
-    standardOutput = stdOut
-  }
-  return String(stdOut.toByteArray()).trim()
-}
+fun runCommand(command: String): String = providers.exec {
+  commandLine(command.split(' '))
+}.standardOutput.asText.get().trim()
 
 aboutLibraries {
-  excludeFields = arrayOf("generated")
+  export {
+    excludeFields.assign(listOf("generated"))
+  }
 }

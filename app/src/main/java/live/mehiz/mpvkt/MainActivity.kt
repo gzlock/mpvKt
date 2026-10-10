@@ -1,6 +1,7 @@
 package live.mehiz.mpvkt
 
 import android.os.Bundle
+import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -29,6 +30,7 @@ import live.mehiz.mpvkt.preferences.AppearancePreferences
 import live.mehiz.mpvkt.preferences.preference.collectAsState
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.ui.home.HomeScreen
+import live.mehiz.mpvkt.ui.smb.SmbProfilesScreen
 import live.mehiz.mpvkt.ui.theme.DarkMode
 import live.mehiz.mpvkt.ui.theme.MpvKtTheme
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
@@ -54,11 +56,29 @@ class MainActivity : ComponentActivity() {
 
   @Composable
   fun Navigator() {
-    val backstack = rememberNavBackStack<Screen>(HomeScreen)
+    val subtitlePicker = intent.getBooleanExtra(EXTRA_SMB_SUBTITLE_PICKER, false)
+    val initialScreen = if (subtitlePicker) {
+      SmbProfilesScreen(
+        subtitlePicker = true,
+        initialProfileId = intent.getStringExtra(EXTRA_SMB_PROFILE_ID),
+        initialPath = intent.getStringExtra(EXTRA_SMB_DIRECTORY_PATH),
+        initialShare = intent.getStringExtra(EXTRA_SMB_SHARE),
+      )
+    } else {
+      HomeScreen
+    }
+    val backstack = rememberNavBackStack(initialScreen)
     CompositionLocalProvider(LocalBackStack provides backstack) {
       NavDisplay(
         backStack = backstack,
-        onBack = { backstack.removeLastOrNull() },
+        onBack = {
+          if (subtitlePicker && backstack.size <= 1) {
+            setResult(Activity.RESULT_CANCELED)
+            finish()
+          } else {
+            backstack.removeLastOrNull()
+          }
+        },
         entryProvider = { route -> NavEntry(route) { (it as Screen).Content() } },
         popTransitionSpec = {
           fadeIn(animationSpec = tween(220)) +
@@ -87,5 +107,12 @@ class MainActivity : ComponentActivity() {
         },
       )
     }
+  }
+
+  companion object {
+    const val EXTRA_SMB_SUBTITLE_PICKER = "smb_subtitle_picker"
+    const val EXTRA_SMB_PROFILE_ID = "smb_profile_id"
+    const val EXTRA_SMB_DIRECTORY_PATH = "smb_directory_path"
+    const val EXTRA_SMB_SHARE = "smb_share"
   }
 }

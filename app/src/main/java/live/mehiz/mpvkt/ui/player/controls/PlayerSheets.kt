@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import dev.vivvvek.seeker.Segment
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -26,6 +27,7 @@ fun PlayerSheets(
   // subtitles sheet
   subtitles: ImmutableList<TrackNode>,
   onAddSubtitle: (Uri) -> Unit,
+  onPickSmbSubtitle: () -> Unit,
   onSelectSubtitle: (Int) -> Unit,
   // audio sheet
   audioTracks: ImmutableList<TrackNode>,
@@ -68,6 +70,7 @@ fun PlayerSheets(
         tracks = subtitles.toImmutableList(),
         onSelect = onSelectSubtitle,
         onAddSubtitle = { subtitlesPicker.launch(arrayOf("*/*")) },
+        onPickSmbSubtitle = onPickSmbSubtitle,
         onOpenSubtitleSettings = { onOpenPanel(Panels.SubtitleSettings) },
         onOpenSubtitleDelay = { onOpenPanel(Panels.SubtitleDelay) },
         onDismissRequest = onDismissRequest,
@@ -132,4 +135,37 @@ fun PlayerSheets(
       )
     }
   }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PlayerSheetsPreview() {
+  PlayerSheets(
+    sheetShown = Sheets.Decoders,
+    subtitles = kotlinx.collections.immutable.persistentListOf(),
+    onAddSubtitle = {},
+    onPickSmbSubtitle = {},
+    onSelectSubtitle = {},
+    audioTracks = kotlinx.collections.immutable.persistentListOf(),
+    onAddAudio = {},
+    onSelectAudio = {},
+    chapter = null,
+    chapters = kotlinx.collections.immutable.persistentListOf(),
+    onSeekToChapter = {},
+    decoder = Decoder.Auto,
+    onUpdateDecoder = {},
+    speed = 1f,
+    speedPresets = listOf(0.75f, 1f, 1.25f, 1.5f, 2f),
+    onSpeedChange = {},
+    onAddSpeedPreset = {},
+    onRemoveSpeedPreset = {},
+    onResetSpeedPresets = {},
+    onMakeDefaultSpeed = {},
+    onResetDefaultSpeed = {},
+    sleepTimerTimeRemaining = 0,
+    onStartSleepTimer = {},
+    buttons = kotlinx.collections.immutable.persistentListOf(),
+    onOpenPanel = {},
+    onDismissRequest = {},
+  )
 }

@@ -13,9 +13,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import dev.vivvvek.seeker.Segment
 import `is`.xyz.mpv.Utils
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.ui.theme.spacing
 
@@ -72,4 +74,31 @@ fun ChapterTrack(
       fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Normal,
     )
   }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ChapterTrackPreview() {
+  ChapterTrack(
+    chapter = Segment("A new beginning", 125f),
+    index = 1,
+    selected = true,
+    onClick = {},
+  )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ChaptersSheetPreview() {
+  val chapters = persistentListOf(
+    Segment("Opening", 0f),
+    Segment("A new beginning", 125f),
+    Segment("Finale", 640f),
+  )
+  ChaptersSheet(
+    chapters = chapters,
+    currentChapter = chapters[1],
+    onClick = {},
+    onDismissRequest = {},
+  )
 }

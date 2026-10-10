@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="smb_profiles_title">Berbagi jaringan SMB</string>
+    <string name="smb_profiles_summary">Koneksi SMB tersimpan</string>
+    <string name="smb_browser_title">Peramban SMB</string>
+    <string name="smb_add_profile">Tambah koneksi SMB</string>
+    <string name="smb_edit_profile">Edit koneksi SMB</string>
+    <string name="smb_delete_profile">Hapus koneksi SMB</string>
+    <string name="smb_no_profiles">Belum ada koneksi SMB tersimpan.</string>
+    <string name="smb_name">Nama</string>
+    <string name="smb_host">Host</string>
+    <string name="smb_port">Port</string>
+    <string name="smb_share">Berbagi</string>
+    <string name="smb_start_path">Jalur awal (opsional)</string>
+    <string name="smb_username">Nama pengguna</string>
+    <string name="smb_domain">Domain/grup kerja</string>
+    <string name="smb_password">Kata sandi</string>
+    <string name="smb_anonymous">Akses anonim</string>
+    <string name="smb_test">Uji</string>
+    <string name="smb_save">Simpan</string>
+    <string name="smb_connection_ok">koneksi berhasil</string>
+    <string name="smb_connection_failed">koneksi gagal</string>
+    <string name="smb_sort">Urutkan</string>
+    <string name="smb_sort_current">Urutkan: %1$s</string>
+    <string name="smb_sort_name_asc">Nama file (A-Z)</string>
+    <string name="smb_sort_name_desc">Nama file (Z-A)</string>
+    <string name="smb_sort_modified_asc">Waktu diubah (terlama)</string>
+    <string name="smb_sort_modified_desc">Waktu diubah (terbaru)</string>
+    <string name="smb_profile_not_found">Profil SMB tidak ditemukan</string>
+    <string name="smb_unable_access">Tidak dapat mengakses berbagi SMB</string>
+    <string name="smb_unable_open">Tidak dapat membuka berkas SMB</string>
+    <string name="smb_no_shares">Folder bersama yang dapat digunakan tidak ditemukan. Coba lagi atau masukkan nama berbagi secara manual.</string>
+    <string name="smb_retry">Coba lagi</string>
+    <string name="smb_enter_share_manually">Masukkan nama berbagi secara manual</string>
+    <string name="smb_share_name_hint">Nama berbagi</string>
+    <string name="smb_open_share">Buka</string>
+    <string name="smb_parent_directory">Direktori induk</string>
+    <string name="pref_player_repeat_playlist">Ulangi daftar putar</string>
+    <string name="player_sheets_add_smb_sub">Tambah subtitle SMB</string>
+    <string name="player_playlist_title">Daftar putar</string>
+    <string name="player_playlist_empty">Daftar putar kosong</string>
+</resources>

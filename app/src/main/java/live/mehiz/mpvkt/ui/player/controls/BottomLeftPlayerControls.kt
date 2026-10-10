@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.res.stringResource
 import dev.vivvvek.seeker.Segment
 import live.mehiz.mpvkt.R
@@ -56,5 +57,21 @@ fun BottomLeftPlayerControls(
         onClick = { onOpenSheet(Sheets.Chapters) }
       )
     }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BottomLeftPlayerControlsPreview() {
+  ControlsPreviewSurface {
+    BottomLeftPlayerControls(
+      playbackSpeed = 1.25f,
+      currentChapter = Segment("Opening", 0f),
+      showChapterIndicator = true,
+      onLockControls = {},
+      onCycleRotation = {},
+      onPlaybackSpeedChange = {},
+      onOpenSheet = {},
+    )
   }
 }

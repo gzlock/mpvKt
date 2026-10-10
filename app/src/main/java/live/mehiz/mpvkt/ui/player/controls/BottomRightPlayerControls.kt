@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import live.mehiz.mpvkt.database.entities.CustomButtonEntity
 import live.mehiz.mpvkt.ui.player.controls.components.ControlsButton
 import live.mehiz.mpvkt.ui.player.execute
@@ -62,6 +63,20 @@ fun BottomRightPlayerControls(
     ControlsButton(
       Icons.Default.AspectRatio,
       onClick = onAspectClick,
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BottomRightPlayerControlsPreview() {
+  ControlsPreviewSurface {
+    BottomRightPlayerControls(
+      customButton = null,
+      customButtonTitle = "",
+      isPipAvailable = true,
+      onAspectClick = {},
+      onPipClick = {},
     )
   }
 }

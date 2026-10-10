@@ -2,6 +2,7 @@ package live.mehiz.mpvkt.ui.player.controls
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.MoreVert
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import live.mehiz.mpvkt.ui.player.Decoder
 import live.mehiz.mpvkt.ui.player.controls.components.ControlsButton
 
@@ -30,6 +32,7 @@ fun TopRightPlayerControls(
   // more
   onMoreClick: () -> Unit,
   onMoreLongClick: () -> Unit,
+  onPlaylistClick: () -> Unit,
 
   modifier: Modifier = Modifier
 ) {
@@ -59,9 +62,34 @@ fun TopRightPlayerControls(
       onLongClick = onAudioLongClick,
     )
     ControlsButton(
+      Icons.AutoMirrored.Filled.PlaylistPlay,
+      onClick = onPlaylistClick,
+    )
+    ControlsButton(
       Icons.Default.MoreVert,
       onClick = onMoreClick,
       onLongClick = onMoreLongClick,
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TopRightPlayerControlsPreview() {
+  ControlsPreviewSurface {
+    TopRightPlayerControls(
+      decoder = Decoder.Auto,
+      onDecoderClick = {},
+      onDecoderLongClick = {},
+      isChaptersVisible = true,
+      onChaptersClick = {},
+      onSubtitlesClick = {},
+      onSubtitlesLongClick = {},
+      onAudioClick = {},
+      onAudioLongClick = {},
+      onMoreClick = {},
+      onMoreLongClick = {},
+      onPlaylistClick = {},
     )
   }
 }

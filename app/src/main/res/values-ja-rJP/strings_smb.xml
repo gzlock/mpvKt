@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="smb_profiles_title">SMB ネットワーク共有</string>
+    <string name="smb_profiles_summary">保存済み SMB 接続</string>
+    <string name="smb_browser_title">SMB ブラウザー</string>
+    <string name="smb_add_profile">SMB 接続を追加</string>
+    <string name="smb_edit_profile">SMB 接続を編集</string>
+    <string name="smb_delete_profile">SMB 接続を削除</string>
+    <string name="smb_no_profiles">保存された SMB 接続はありません。</string>
+    <string name="smb_name">名前</string>
+    <string name="smb_host">ホスト</string>
+    <string name="smb_port">ポート</string>
+    <string name="smb_share">共有名</string>
+    <string name="smb_start_path">開始パス（任意）</string>
+    <string name="smb_username">ユーザー名</string>
+    <string name="smb_domain">ドメイン/ワークグループ</string>
+    <string name="smb_password">パスワード</string>
+    <string name="smb_anonymous">匿名アクセス</string>
+    <string name="smb_test">接続テスト</string>
+    <string name="smb_save">保存</string>
+    <string name="smb_connection_ok">接続成功</string>
+    <string name="smb_connection_failed">接続失敗</string>
+    <string name="smb_sort">並べ替え</string>
+    <string name="smb_sort_current">並べ替え：%1$s</string>
+    <string name="smb_sort_name_asc">ファイル名（昇順）</string>
+    <string name="smb_sort_name_desc">ファイル名（降順）</string>
+    <string name="smb_sort_modified_asc">更新日時（古い順）</string>
+    <string name="smb_sort_modified_desc">更新日時（新しい順）</string>
+    <string name="smb_profile_not_found">SMB プロファイルが見つかりません</string>
+    <string name="smb_unable_access">SMB 共有にアクセスできません</string>
+    <string name="smb_unable_open">SMB ファイルを開けません</string>
+    <string name="smb_no_shares">利用可能な共有フォルダーが見つかりません。再試行するか、共有名を手動で入力してください。</string>
+    <string name="smb_retry">再試行</string>
+    <string name="smb_enter_share_manually">共有名を手動で入力</string>
+    <string name="smb_share_name_hint">共有名</string>
+    <string name="smb_open_share">開く</string>
+    <string name="smb_parent_directory">親ディレクトリ</string>
+    <string name="pref_player_repeat_playlist">プレイリストをリピート</string>
+    <string name="player_sheets_add_smb_sub">SMB 字幕を追加</string>
+    <string name="player_playlist_title">プレイリスト</string>
+    <string name="player_playlist_empty">プレイリストは空です</string>
+</resources>

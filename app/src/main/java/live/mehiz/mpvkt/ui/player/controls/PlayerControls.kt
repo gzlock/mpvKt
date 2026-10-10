@@ -23,17 +23,29 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -46,20 +58,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.Utils
+import dev.vivvvek.seeker.Segment
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
@@ -75,6 +92,7 @@ import live.mehiz.mpvkt.ui.custombuttons.getButtons
 import live.mehiz.mpvkt.ui.player.Decoder.Companion.getDecoderFromValue
 import live.mehiz.mpvkt.ui.player.Panels
 import live.mehiz.mpvkt.ui.player.PlayerActivity
+import live.mehiz.mpvkt.ui.player.PlaylistItem
 import live.mehiz.mpvkt.ui.player.PlayerUpdates
 import live.mehiz.mpvkt.ui.player.PlayerViewModel
 import live.mehiz.mpvkt.ui.player.Sheets
@@ -102,6 +120,7 @@ fun PlayerControls(
   onBackPress: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val activity = LocalActivity.current!! as PlayerActivity
   val spacing = MaterialTheme.spacing
   val playerPreferences = koinInject<PlayerPreferences>()
   val audioPreferences = koinInject<AudioPreferences>()
@@ -147,6 +166,9 @@ fun PlayerControls(
   }
   val customButtons by viewModel.customButtons.collectAsState()
   val customButton by viewModel.primaryButton.collectAsState()
+  val playlist by viewModel.playlist.collectAsState()
+  val playlistPosition by viewModel.playlistPosition.collectAsState()
+  val playlistShown by viewModel.playlistShown.collectAsState()
 
   LaunchedEffect(
     controlsShown,
@@ -326,7 +348,7 @@ fun PlayerControls(
           enter = fadeIn(),
           exit = fadeOut(),
           modifier = Modifier.constrainAs(unlockControlsButton) {
-            top.linkTo(parent.top, spacing.medium)
+            bottom.linkTo(parent.bottom, spacing.medium + 48.dp)
             start.linkTo(parent.start, spacing.medium)
           },
         ) {
@@ -486,7 +508,38 @@ fun PlayerControls(
             onAudioLongClick = { onOpenPanel(Panels.AudioDelay) },
             onMoreClick = { onOpenSheet(Sheets.More) },
             onMoreLongClick = { onOpenPanel(Panels.VideoFilters) },
+            onPlaylistClick = viewModel::togglePlaylist,
           )
+        }
+        AnimatedVisibility(
+          visible = playlistShown,
+          enter = slideInHorizontally { it } + fadeIn(),
+          exit = slideOutHorizontally { it } + fadeOut(),
+          modifier = Modifier.zIndex(1f).constrainAs(createRef()) {
+            top.linkTo(parent.top)
+            bottom.linkTo(parent.bottom)
+            start.linkTo(parent.start)
+            end.linkTo(parent.end)
+          },
+        ) {
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = viewModel::closePlaylist,
+              ),
+            contentAlignment = Alignment.CenterEnd,
+          ) {
+            PlaylistDrawer(
+              items = playlist,
+              currentPosition = playlistPosition,
+              onItemClick = viewModel::selectPlaylist,
+              onCloseClick = viewModel::closePlaylist,
+              modifier = Modifier.offset { IntOffset(spacing.medium.roundToPx(), 0) },
+            )
+          }
         }
         // Bottom right controls
         val customButtonTitle by viewModel.primaryButtonTitle.collectAsState()
@@ -509,7 +562,6 @@ fun PlayerControls(
             end.linkTo(seekbar.end)
           },
         ) {
-          val activity = LocalActivity.current!! as PlayerActivity
           BottomRightPlayerControls(
             customButton = customButton,
             customButtonTitle = customButtonTitle,
@@ -579,6 +631,12 @@ fun PlayerControls(
       sheetShown = sheetShown,
       subtitles = subtitles,
       onAddSubtitle = viewModel::addSubtitle,
+      onPickSmbSubtitle = {
+        activity.startActivityForResult(
+          activity.createSmbSubtitlePickerIntent(),
+          PlayerActivity.SMB_SUBTITLE_REQUEST,
+        )
+      },
       onSelectSubtitle = viewModel::selectSub,
       audioTracks = audioTracks,
       onAddAudio = viewModel::addAudio,
@@ -619,6 +677,152 @@ fun PlayerControls(
       panelShown = panel,
       onDismissRequest = { onOpenPanel(Panels.None) },
     )
+  }
+}
+
+@Preview(showBackground = true, widthDp = 800, heightDp = 450)
+@Composable
+private fun PlayerControlsPreview() {
+  ControlsPreviewSurface {
+    Box(modifier = Modifier.fillMaxSize()) {
+      Column(
+        modifier = Modifier
+          .fillMaxSize()
+          .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+      ) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          TopLeftPlayerControls(
+            mediaTitle = "Preview video · 1080p",
+            onBackClick = {},
+          )
+          TopRightPlayerControls(
+            decoder = live.mehiz.mpvkt.ui.player.Decoder.Auto,
+            onDecoderClick = {},
+            onDecoderLongClick = {},
+            isChaptersVisible = true,
+            onChaptersClick = {},
+            onSubtitlesClick = {},
+            onSubtitlesLongClick = {},
+            onAudioClick = {},
+            onAudioLongClick = {},
+            onMoreClick = {},
+            onMoreLongClick = {},
+            onPlaylistClick = {},
+          )
+        }
+        Column {
+          SeekbarWithTimers(
+            position = 5 * 60f,
+            duration = 24 * 60f,
+            remaining = 19 * 60f,
+            readAheadValue = 7 * 60f,
+            onValueChange = {},
+            onValueChangeFinished = {},
+            timersInverted = false to true,
+            positionTimerOnClick = {},
+            durationTimerOnCLick = {},
+            chapters = persistentListOf(Segment("Opening", 0f), Segment("Main", 5 * 60f)),
+          )
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            BottomLeftPlayerControls(
+              playbackSpeed = 1f,
+              currentChapter = Segment("Main", 5 * 60f),
+              showChapterIndicator = true,
+              onLockControls = {},
+              onCycleRotation = {},
+              onPlaybackSpeedChange = {},
+              onOpenSheet = {},
+              modifier = Modifier.weight(1f),
+            )
+            BottomRightPlayerControls(
+              customButton = null,
+              customButtonTitle = "",
+              isPipAvailable = true,
+              onAspectClick = {},
+              onPipClick = {},
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun PlaylistDrawer(
+  items: List<PlaylistItem>,
+  currentPosition: Int,
+  onItemClick: (Int) -> Unit,
+  onCloseClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Surface(
+    modifier = modifier
+      .width(320.dp)
+      .fillMaxHeight()
+      .clickable(
+        interactionSource = remember { MutableInteractionSource() },
+        indication = null,
+        onClick = {},
+      ),
+    color = MaterialTheme.colorScheme.surfaceContainer,
+  ) {
+    Column {
+      Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Text(
+          text = stringResource(R.string.player_playlist_title),
+          style = MaterialTheme.typography.titleMedium,
+          color = MaterialTheme.colorScheme.onSurface,
+          modifier = Modifier.weight(1f).padding(start = 16.dp),
+        )
+        androidx.compose.material3.IconButton(
+          onClick = onCloseClick,
+          colors = androidx.compose.material3.IconButtonDefaults.iconButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurface,
+          ),
+        ) {
+          androidx.compose.material3.Icon(
+            Icons.Default.Close,
+            stringResource(android.R.string.cancel),
+            tint = MaterialTheme.colorScheme.onSurface,
+          )
+        }
+      }
+      if (items.isEmpty()) {
+        Text(
+          text = stringResource(R.string.player_playlist_empty),
+          modifier = Modifier.padding(16.dp),
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      } else {
+        LazyColumn {
+          itemsIndexed(items, key = { index, item -> "${index}_${item.source}" }) { index, item ->
+            Text(
+              text = item.title,
+              modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onItemClick(index) }
+                .background(
+                  if (index == currentPosition) MaterialTheme.colorScheme.primaryContainer
+                  else Color.Transparent,
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+              color = if (index == currentPosition) MaterialTheme.colorScheme.onPrimaryContainer
+              else MaterialTheme.colorScheme.onSurface,
+            )
+          }
+        }
+      }
+    }
   }
 }
 

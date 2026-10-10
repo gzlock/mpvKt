@@ -46,6 +46,7 @@ import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.ui.player.PlayerActivity
 import live.mehiz.mpvkt.ui.preferences.PreferencesScreen
+import live.mehiz.mpvkt.ui.smb.SmbProfilesScreen
 import live.mehiz.mpvkt.ui.theme.spacing
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
 
@@ -140,6 +141,15 @@ object HomeScreen : Screen {
           ) {
             Icon(Icons.Default.FolderOpen, null)
             Text(text = stringResource(R.string.home_open_file_picker))
+          }
+        }
+        OutlinedButton(onClick = { backstack.add(SmbProfilesScreen()) }) {
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.smaller),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Icon(Icons.Default.FolderOpen, null)
+            Text(stringResource(R.string.smb_profiles_title))
           }
         }
       }

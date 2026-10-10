@@ -9,6 +9,11 @@ A media player for Android based on [mpv-android](https://github.com/mpv-android
 - Sleep timer, Speed presets
 - Smoother PiP
 
+### v0.1.7
+- Browse and stream videos from SMB network shares with securely saved connection profiles
+- Load external subtitles directly from SMB shares
+- Sort and navigate folder playlists in the player, with optional playlist repeat
+
 ## Showcase
 
 <img src="/fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" width="24%" /> <img src="/fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" width="24%" /> <img src="/fastlane/metadata/android/en-US/images/phoneScreenshots/3_en-US.png" width="24%"> <img src="/fastlane/metadata/android/en-US/images/phoneScreenshots/4_en-US.png" width="24%" />

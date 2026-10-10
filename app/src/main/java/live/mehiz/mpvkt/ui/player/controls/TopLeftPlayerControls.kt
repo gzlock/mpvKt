@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextOverflow
 import live.mehiz.mpvkt.ui.player.controls.components.ControlsButton
 
@@ -32,6 +33,17 @@ fun TopLeftPlayerControls(
       overflow = TextOverflow.Ellipsis,
       color = Color.White,
       style = MaterialTheme.typography.bodyLarge,
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TopLeftPlayerControlsPreview() {
+  ControlsPreviewSurface {
+    TopLeftPlayerControls(
+      mediaTitle = "A long media title that demonstrates truncation",
+      onBackClick = {},
     )
   }
 }

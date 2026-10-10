@@ -22,7 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.presentation.components.PlayerSheet
 import live.mehiz.mpvkt.ui.player.TrackNode
@@ -85,6 +87,23 @@ fun AddTrackRow(
     }
     actions()
   }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AddTrackRowPreview() {
+  AddTrackRow(title = "Add external track", onClick = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun GenericTracksSheetPreview() {
+  GenericTracksSheet(
+    tracks = persistentListOf("English · Stereo", "Japanese · 5.1"),
+    onDismissRequest = {},
+    header = { AddTrackRow(title = "Add audio track", onClick = {}) },
+    track = { AudioTrackRow(title = it, isSelected = it.startsWith("English"), onClick = {}) },
+  )
 }
 
 @Composable

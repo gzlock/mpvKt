@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.graphics.alpha
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
@@ -220,4 +221,13 @@ fun SubtitlesColorPicker(
       tint = Color.White,
     )
   }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SubtitlesColorPickerPreview() {
+  SubtitlesColorPicker(
+    color = 0xFFFFD060.toInt(),
+    onColorChange = {},
+  )
 }

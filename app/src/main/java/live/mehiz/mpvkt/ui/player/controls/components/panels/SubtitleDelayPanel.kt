@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.constraintlayout.compose.ConstraintLayout
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
@@ -332,4 +333,14 @@ fun SubtitleDelayTitle(
 
 enum class DelayType {
   Audio, Subtitle
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SubtitleDelayTitlePreview() {
+  SubtitleDelayTitle(
+    affectedSubtitle = SubtitleDelayType.Primary,
+    onClose = {},
+    onTypeChange = {},
+  )
 }

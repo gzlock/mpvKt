@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Audiotrack
 import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Gesture
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Memory
@@ -27,6 +28,7 @@ import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.ui.custombuttons.CustomButtonsScreen
+import live.mehiz.mpvkt.ui.smb.SmbProfilesScreen
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.preference
@@ -110,6 +112,13 @@ object PreferencesScreen : Screen {
             summary = { Text(text = stringResource(id = R.string.pref_advanced_summary)) },
             icon = { Icon(Icons.Outlined.Code, null) },
             onClick = { backstack.add(AdvancedPreferencesScreen) }
+          )
+          preference(
+            key = "smb",
+            title = { Text(stringResource(R.string.smb_profiles_title)) },
+            summary = { Text(stringResource(R.string.smb_profiles_summary)) },
+            icon = { Icon(Icons.Outlined.Folder, null) },
+            onClick = { backstack.add(SmbProfilesScreen()) },
           )
           preference(
             key = "about",

@@ -40,6 +40,7 @@ class PlayerPreferences(
   val automaticallyEnterPip = preferenceStore.getBoolean("automatic_pip")
   val automaticBackgroundPlayback = preferenceStore.getBoolean("automatic_background_playback")
   val closeAfterReachingEndOfVideo = preferenceStore.getBoolean("close_after_eof")
+  val repeatPlaylist = preferenceStore.getBoolean("repeat_playlist", true)
 
   val rememberBrightness = preferenceStore.getBoolean("remember_rightness")
   val defaultBrightness = preferenceStore.getFloat("default_brightness", -1f)

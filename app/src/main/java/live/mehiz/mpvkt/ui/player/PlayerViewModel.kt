@@ -125,6 +125,35 @@ class PlayerViewModel(
   val sheetShown = MutableStateFlow(Sheets.None)
   val panelShown = MutableStateFlow(Panels.None)
 
+  private val _playlist = MutableStateFlow<List<PlaylistItem>>(emptyList())
+  val playlist = _playlist.asStateFlow()
+  private val _playlistPosition = MutableStateFlow(0)
+  val playlistPosition = _playlistPosition.asStateFlow()
+  val playlistShown = MutableStateFlow(false)
+
+  fun setPlaylist(items: List<PlaylistItem>, initialPosition: Int = 0) {
+    _playlist.value = items
+    _playlistPosition.value = initialPosition.coerceIn(0, (items.size - 1).coerceAtLeast(0))
+  }
+
+  fun setPlaylistPosition(position: Int) {
+    _playlistPosition.value = position.coerceAtLeast(0)
+  }
+
+  fun togglePlaylist() {
+    playlistShown.update { !it }
+  }
+
+  fun closePlaylist() {
+    playlistShown.value = false
+  }
+
+  fun selectPlaylist(position: Int) {
+    activity.selectPlaylistItem(position)
+    _playlistPosition.value = position
+    closePlaylist()
+  }
+
   // Pair(startingPosition, seekAmount)
   val gestureSeekAmount = MutableStateFlow<Pair<Int, Int>?>(null)
 
@@ -518,6 +547,8 @@ class PlayerViewModel(
     _primaryButtonTitle.update { _ -> button.title }
   }
 }
+
+data class PlaylistItem(val title: String, val source: String)
 
 fun Float.normalize(inMin: Float, inMax: Float, outMin: Float, outMax: Float): Float {
   return (this - inMin) * (outMax - outMin) / (inMax - inMin) + outMin

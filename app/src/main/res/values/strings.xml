@@ -14,6 +14,41 @@
     <string name="home_open_url">Open url</string>
     <string name="home_url_input_label">URL</string>
     <string name="home_invalid_protocol">Invalid protocol</string>
+    <string name="smb_profiles_title">SMB network shares</string>
+    <string name="smb_profiles_summary">Saved SMB connections</string>
+    <string name="smb_browser_title">SMB browser</string>
+    <string name="smb_add_profile">Add SMB connection</string>
+    <string name="smb_edit_profile">Edit SMB connection</string>
+    <string name="smb_delete_profile">Delete SMB connection</string>
+    <string name="smb_no_profiles">No SMB connections saved.</string>
+    <string name="smb_name">Name</string>
+    <string name="smb_host">Host</string>
+    <string name="smb_port">Port</string>
+    <string name="smb_share">Share</string>
+    <string name="smb_start_path">Start path (optional)</string>
+    <string name="smb_username">Username</string>
+    <string name="smb_domain">Domain / workgroup</string>
+    <string name="smb_password">Password</string>
+    <string name="smb_anonymous">Anonymous access</string>
+    <string name="smb_test">Test</string>
+    <string name="smb_save">Save</string>
+    <string name="smb_connection_ok">connection successful</string>
+    <string name="smb_connection_failed">connection failed</string>
+    <string name="smb_sort">Sort</string>
+    <string name="smb_sort_current">Sort: %1$s</string>
+    <string name="smb_sort_name_asc">File name (A–Z)</string>
+    <string name="smb_sort_name_desc">File name (Z–A)</string>
+    <string name="smb_sort_modified_asc">Modified time (oldest)</string>
+    <string name="smb_sort_modified_desc">Modified time (newest)</string>
+    <string name="smb_profile_not_found">SMB profile not found</string>
+    <string name="smb_unable_access">Unable to access SMB share</string>
+    <string name="smb_unable_open">Unable to open SMB file</string>
+    <string name="smb_no_shares">No usable shared folders were found. Retry or enter a share name manually.</string>
+    <string name="smb_retry">Retry</string>
+    <string name="smb_enter_share_manually">Enter share manually</string>
+    <string name="smb_share_name_hint">Share name</string>
+    <string name="smb_open_share">Open</string>
+    <string name="smb_parent_directory">Parent directory</string>
 
     <string name="pref_preferences">Preferences</string>
 
@@ -49,6 +84,7 @@
     <string name="pref_player_precise_seeking_summary">Seek to exact positions instead of keyframes (slow)</string>
     <string name="pref_player_automatically_enter_pip">Automatically switch to PiP</string>
     <string name="pref_player_close_after_eof">Close after the end of playback</string>
+    <string name="pref_player_repeat_playlist">Replay playlist</string>
     <string name="pref_player_remember_brightness">Remember display brightness</string>
 
     <string name="pref_player_gestures">Gestures</string>
@@ -161,6 +197,7 @@
     <string name="pref_about_privacy_policy">Privacy policy</string>
 
     <string name="player_sheets_add_ext_sub">Add external subtitles</string>
+    <string name="player_sheets_add_smb_sub">Add SMB subtitle</string>
     <string name="player_sheets_add_ext_audio">Add external audio tracks</string>
     <string name="player_sheets_tracks_off">Off</string>
     <string name="player_sheets_track_title_w_lang" translatable="false">#%d: %s (%s)</string>
@@ -237,6 +274,8 @@
     <string name="player_seek_n_seconds">%d seconds</string>
     <string name="player_speed" translatable="false">%.2fx</string>
     <string name="player_gesture_seek_indicator" translatable="false">%c%s\n[%s]</string>
+    <string name="player_playlist_title">Playback list</string>
+    <string name="player_playlist_empty">No files in this playlist</string>
 
     <string name="player_aspect_fit">Fit Screen</string>
     <string name="player_aspect_crop">Crop</string>

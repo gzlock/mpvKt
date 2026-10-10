@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="smb_profiles_title">Recursos compartidos SMB</string>
+    <string name="smb_profiles_summary">Conexiones SMB guardadas</string>
+    <string name="smb_browser_title">Explorador SMB</string>
+    <string name="smb_add_profile">Añadir conexión SMB</string>
+    <string name="smb_edit_profile">Editar conexión SMB</string>
+    <string name="smb_delete_profile">Eliminar conexión SMB</string>
+    <string name="smb_no_profiles">No hay conexiones SMB guardadas.</string>
+    <string name="smb_name">Nombre</string>
+    <string name="smb_host">Host</string>
+    <string name="smb_port">Puerto</string>
+    <string name="smb_share">Recurso compartido</string>
+    <string name="smb_start_path">Ruta inicial (opcional)</string>
+    <string name="smb_username">Usuario</string>
+    <string name="smb_domain">Dominio/grupo de trabajo</string>
+    <string name="smb_password">Contraseña</string>
+    <string name="smb_anonymous">Acceso anónimo</string>
+    <string name="smb_test">Probar</string>
+    <string name="smb_save">Guardar</string>
+    <string name="smb_connection_ok">conexión correcta</string>
+    <string name="smb_connection_failed">conexión fallida</string>
+    <string name="smb_sort">Ordenar</string>
+    <string name="smb_sort_current">Ordenar: %1$s</string>
+    <string name="smb_sort_name_asc">Nombre (A-Z)</string>
+    <string name="smb_sort_name_desc">Nombre (Z-A)</string>
+    <string name="smb_sort_modified_asc">Modificación (más antiguo)</string>
+    <string name="smb_sort_modified_desc">Modificación (más reciente)</string>
+    <string name="smb_profile_not_found">Perfil SMB no encontrado</string>
+    <string name="smb_unable_access">No se puede acceder al recurso SMB</string>
+    <string name="smb_unable_open">No se puede abrir el archivo SMB</string>
+    <string name="smb_no_shares">No se encontraron carpetas compartidas disponibles. Inténtalo de nuevo o introduce manualmente el nombre del recurso compartido.</string>
+    <string name="smb_retry">Reintentar</string>
+    <string name="smb_enter_share_manually">Introducir manualmente el nombre del recurso compartido</string>
+    <string name="smb_share_name_hint">Nombre del recurso compartido</string>
+    <string name="smb_open_share">Abrir</string>
+    <string name="smb_parent_directory">Directorio principal</string>
+    <string name="pref_player_repeat_playlist">Repetir lista de reproducción</string>
+    <string name="player_sheets_add_smb_sub">Añadir subtítulos SMB</string>
+    <string name="player_playlist_title">Lista de reproducción</string>
+    <string name="player_playlist_empty">La lista está vacía</string>
+</resources>

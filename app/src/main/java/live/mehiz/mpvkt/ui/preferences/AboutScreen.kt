@@ -21,6 +21,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -28,8 +30,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.navigation3.runtime.rememberNavBackStack
+import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import compose.icons.SimpleIcons
 import compose.icons.simpleicons.Github
@@ -142,6 +147,7 @@ object LibrariesScreen : Screen {
   @Composable
   override fun Content() {
     val backstack = LocalBackStack.current
+    val libraries by produceLibraries()
     Scaffold(
       topBar = {
         TopAppBar(
@@ -154,7 +160,21 @@ object LibrariesScreen : Screen {
         )
       },
     ) { paddingValues ->
-      LibrariesContainer(modifier = Modifier.padding(paddingValues))
+      LibrariesContainer(
+        libraries = libraries,
+        modifier = Modifier.padding(paddingValues),
+      )
+    }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AboutScreenPreview() {
+  val backstack = rememberNavBackStack(AboutScreen)
+  CompositionLocalProvider(LocalBackStack provides backstack) {
+    MaterialTheme {
+      AboutScreen.Content()
     }
   }
 }

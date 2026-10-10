@@ -57,6 +57,8 @@ import live.mehiz.mpvkt.preferences.AudioPreferences
 import live.mehiz.mpvkt.preferences.GesturePreferences
 import live.mehiz.mpvkt.preferences.PlayerPreferences
 import live.mehiz.mpvkt.preferences.SubtitlesPreferences
+import live.mehiz.mpvkt.network.smb.SmbRuntime
+import live.mehiz.mpvkt.ui.player.PlaylistItem
 import live.mehiz.mpvkt.ui.player.controls.PlayerControls
 import live.mehiz.mpvkt.ui.theme.MpvKtTheme
 import org.koin.android.ext.android.inject
@@ -79,8 +81,18 @@ class PlayerActivity : AppCompatActivity() {
   private val advancedPreferences: AdvancedPreferences by inject()
   private val gesturePreferences: GesturePreferences by inject()
   private val fileManager: FileManager by inject()
+  private val smbRuntime: SmbRuntime by inject()
 
   private var fileName = ""
+  private var playlistInitialized = false
+  private var playlistUrls: List<String> = emptyList()
+  private var playlistTitles: List<String> = emptyList()
+  private var playlistStartPosition = 0
+  // One-shot opt-in: initial loads and explicit playlist selections may resume their saved position.
+  private var restorePositionOnNextFileLoaded = true
+  private var smbProfileId: String? = null
+  private var smbShareName: String? = null
+  private var smbDirectoryPath: String? = null
   private var mediaPlaybackService: MediaPlaybackService? = null
   private var serviceBound = false
 
@@ -115,7 +127,8 @@ class PlayerActivity : AppCompatActivity() {
     setupMPV()
     setupAudio()
     setupMediaSession()
-    getPlayableUri(intent)?.let(player::playFile)
+    val initialPath = configurePlaylist(intent)
+    initialPath?.let(player::playFile)
     setOrientation()
 
     binding.controls.setContent {
@@ -149,13 +162,69 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     player.isExiting = true
-    if (isFinishing) {
-      MPVLib.command("stop")
-    }
+    if (isFinishing) MPVLib.command("stop")
     MPVLib.removeObserver(playerObserver)
     MPVLib.destroy()
+    smbRuntime.closePlayback()
 
     super.onDestroy()
+  }
+
+  private fun configurePlaylist(playIntent: Intent): String? {
+    restorePositionOnNextFileLoaded = true
+    smbProfileId = playIntent.getStringExtra("smb_profile_id")
+    smbShareName = playIntent.getStringExtra("smb_share")
+    smbDirectoryPath = playIntent.getStringExtra("smb_directory_path")
+    // A previous SMB item may have forced its filename as the media title.
+    // Clear it before loading another intent; intent titles are reapplied below.
+    MPVLib.setPropertyString("force-media-title", "")
+    playlistUrls = playIntent.getStringArrayListExtra("playlist_urls") ?: emptyList()
+    playlistTitles = playIntent.getStringArrayListExtra("playlist_titles") ?: emptyList()
+    playlistStartPosition = playIntent.getIntExtra("playlist_start_index", 0)
+      .coerceIn(0, (playlistUrls.size - 1).coerceAtLeast(0))
+    var initialPath = playlistUrls.getOrNull(playlistStartPosition) ?: getPlayableUri(playIntent)
+    if (playlistUrls.isEmpty()) {
+      buildLocalPlaylist(initialPath)
+      playlistStartPosition = playlistUrls.indexOf(initialPath).takeIf { it >= 0 } ?: 0
+      initialPath = playlistUrls.getOrNull(playlistStartPosition) ?: initialPath
+    }
+    viewModel.setPlaylist(
+      playlistUrls.mapIndexed { index, source ->
+        PlaylistItem(playlistTitles.getOrNull(index) ?: source.substringAfterLast('/'), source)
+      },
+      playlistStartPosition,
+    )
+    return initialPath
+  }
+
+  private fun buildLocalPlaylist(path: String?) {
+    if (path.isNullOrBlank() || path.contains("://") || path.startsWith("fd://")) return
+    val file = File(path)
+    val parent = file.parentFile ?: return
+    val files = parent.listFiles()?.asSequence()
+      ?.filter { it.isFile && videoExtensions.contains(it.extension.lowercase()) }
+      ?.sortedWith(compareBy<File> { it.name.lowercase() }.thenBy { it.name })
+      ?.toList().orEmpty()
+    if (files.isEmpty()) return
+    playlistUrls = files.map { it.absolutePath }
+    playlistTitles = files.map { it.name }
+  }
+
+  fun selectPlaylistItem(position: Int) {
+    if (position !in playlistUrls.indices) return
+    if (MPVLib.getPropertyInt("playlist-pos") == position) return
+    restorePositionOnNextFileLoaded = true
+    MPVLib.setPropertyInt("playlist-pos", position)
+    MPVLib.setPropertyBoolean("pause", false)
+  }
+
+  fun createSmbSubtitlePickerIntent(): Intent {
+    return Intent(this, live.mehiz.mpvkt.MainActivity::class.java).apply {
+      putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_SUBTITLE_PICKER, true)
+      smbProfileId?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_PROFILE_ID, it) }
+      smbShareName?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_SHARE, it) }
+      smbDirectoryPath?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_DIRECTORY_PATH, it) }
+    }
   }
 
   override fun onPause() {
@@ -551,14 +620,38 @@ class PlayerActivity : AppCompatActivity() {
     if (player.isExiting) return
     when (eventId) {
       MPVLib.mpvEventId.MPV_EVENT_FILE_LOADED -> {
-        fileName = getFileName(intent)
+        val initializingPlaylist = !playlistInitialized && playlistUrls.isNotEmpty()
+        if (initializingPlaylist) {
+          playlistUrls.forEachIndexed { index, source ->
+            if (index != playlistStartPosition) MPVLib.command("loadfile", source, "append")
+          }
+          if (playlistStartPosition > 0) {
+            MPVLib.command("playlist-move", "0", playlistStartPosition.toString())
+          }
+          MPVLib.setPropertyString("loop-playlist", if (playerPreferences.repeatPlaylist.get()) "inf" else "no")
+          playlistInitialized = true
+        }
+        val playlistPosition = if (initializingPlaylist) {
+          playlistStartPosition
+        } else {
+          MPVLib.getPropertyInt("playlist-pos") ?: 0
+        }
+        val restorePosition = restorePositionOnNextFileLoaded
+        restorePositionOnNextFileLoaded = false
+        fileName = playlistTitles.getOrNull(playlistPosition) ?: getFileName(intent)
+        viewModel.setPlaylistPosition(playlistPosition)
         setIntentExtras(intent.extras)
+        if (!restorePosition) MPVLib.setPropertyInt("time-pos", 0)
+        if (smbProfileId != null) {
+          // SMB streams use an internal proxy URL, whose generated id is not a useful title.
+          MPVLib.setPropertyString("force-media-title", fileName)
+        }
         val mediaTitle = MPVLib.getPropertyString("media-title")
         if (mediaTitle.isNullOrBlank() || mediaTitle.isDigitsOnly()) {
           MPVLib.setPropertyString("media-title", fileName)
         }
         lifecycleScope.launch(Dispatchers.IO) {
-          loadVideoPlaybackState(fileName)
+          loadVideoPlaybackState(fileName, restorePosition)
         }
         setOrientation()
         viewModel.changeVideoAspect(playerPreferences.videoAspect.get())
@@ -596,7 +689,7 @@ class PlayerActivity : AppCompatActivity() {
     }
   }
 
-  private suspend fun loadVideoPlaybackState(mediaTitle: String) {
+  private suspend fun loadVideoPlaybackState(mediaTitle: String, restorePosition: Boolean) {
     if (mediaTitle.isBlank()) return
     val state = playbackStateRepository.getVideoDataByTitle(mediaTitle)
     val getDelay: (Int, Int?) -> Double = { preferenceDelay, stateDelay ->
@@ -614,7 +707,7 @@ class PlayerActivity : AppCompatActivity() {
       MPVLib.setPropertyDouble("sub-delay", it.playbackSpeed)
       MPVLib.setPropertyDouble("audio-delay", audioDelay)
     }
-    if (playerPreferences.savePositionOnQuit.get()) {
+    if (restorePosition && playerPreferences.savePositionOnQuit.get()) {
       state?.lastPosition?.let { if (it != 0) MPVLib.setPropertyInt("time-pos", it) }
     }
     MPVLib.setPropertyDouble("sub-speed", state?.subSpeed ?: subtitlesPreferences.defaultSubSpeed.get().toDouble())
@@ -634,8 +727,16 @@ class PlayerActivity : AppCompatActivity() {
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
 
-    getPlayableUri(intent)?.let { MPVLib.command("loadfile", it) }
     setIntent(intent)
+    playlistInitialized = false
+    configurePlaylist(intent)?.let { MPVLib.command("loadfile", it, "replace") }
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    if (requestCode == SMB_SUBTITLE_REQUEST && resultCode == RESULT_OK) {
+      data?.data?.let(viewModel::addSubtitle)
+    }
   }
 
   @RequiresApi(Build.VERSION_CODES.O)
@@ -677,6 +778,7 @@ class PlayerActivity : AppCompatActivity() {
     viewModel.isBrightnessSliderShown.update { false }
     viewModel.isVolumeSliderShown.update { false }
     viewModel.sheetShown.update { Sheets.None }
+    viewModel.closePlaylist()
     pipReceiver = object : BroadcastReceiver() {
       override fun onReceive(context: Context?, intent: Intent?) {
         if (intent == null || intent.action != PIP_INTENTS_FILTER) return
@@ -852,6 +954,7 @@ class PlayerActivity : AppCompatActivity() {
   }
 
   companion object {
+    const val SMB_SUBTITLE_REQUEST = 4172
     // action of result intent
     private const val RESULT_INTENT = "live.mehiz.mpvkt.ui.player.PlayerActivity.result"
   }

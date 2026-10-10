@@ -1,6 +1,7 @@
 package live.mehiz.mpvkt.ui.player.controls.components.sheets
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.toImmutableList
 import live.mehiz.mpvkt.R
@@ -22,5 +23,15 @@ fun DecodersSheet(
       )
     },
     onDismissRequest = onDismissRequest
+  )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DecodersSheetPreview() {
+  DecodersSheet(
+    selectedDecoder = Decoder.HW,
+    onSelect = {},
+    onDismissRequest = {},
   )
 }

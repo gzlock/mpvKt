@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.constraintlayout.compose.ConstraintLayout
 import `is`.xyz.mpv.MPVLib
 import live.mehiz.mpvkt.R
@@ -79,4 +80,10 @@ fun AudioDelayCardTitle(
       )
     }
   }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AudioDelayCardTitlePreview() {
+  AudioDelayCardTitle(onClose = {})
 }

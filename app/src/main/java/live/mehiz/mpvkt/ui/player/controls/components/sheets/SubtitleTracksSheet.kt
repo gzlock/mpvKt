@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.ui.player.TrackNode
 import live.mehiz.mpvkt.ui.theme.spacing
@@ -31,6 +33,7 @@ fun SubtitlesSheet(
   tracks: ImmutableList<TrackNode>,
   onSelect: (Int) -> Unit,
   onAddSubtitle: () -> Unit,
+  onPickSmbSubtitle: () -> Unit,
   onOpenSubtitleSettings: () -> Unit,
   onOpenSubtitleDelay: () -> Unit,
   onDismissRequest: () -> Unit,
@@ -51,6 +54,10 @@ fun SubtitlesSheet(
             Icon(Icons.Default.MoreTime, null)
           }
         },
+      )
+      AddTrackRow(
+        stringResource(R.string.player_sheets_add_smb_sub),
+        onPickSmbSubtitle,
       )
     },
     track = { track ->
@@ -105,4 +112,31 @@ fun SubtitleTrackRow(
       )
     }
   }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SubtitleTrackRowPreview() {
+  SubtitleTrackRow(
+    title = "English · Signs & Songs",
+    selected = 0,
+    onClick = {},
+  )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SubtitlesSheetPreview() {
+  SubtitlesSheet(
+    tracks = persistentListOf(
+      TrackNode(id = 1, type = "sub", title = "English", lang = "en", selected = true, mainSelection = 0),
+      TrackNode(id = 2, type = "sub", title = "Signs & Songs", lang = "ja"),
+    ),
+    onSelect = {},
+    onAddSubtitle = {},
+    onPickSmbSubtitle = {},
+    onOpenSubtitleSettings = {},
+    onOpenSubtitleDelay = {},
+    onDismissRequest = {},
+  )
 }
