@@ -9,5 +9,6 @@
 .cxx
 local.properties
 .kotlin
+__pycache__/
 .run
 .tmp-aar
