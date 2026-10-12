@@ -9,6 +9,9 @@ A media player for Android based on [mpv-android](https://github.com/mpv-android
 - Sleep timer, Speed presets
 - Smoother PiP
 
+### v0.1.8
+- Upgrade mpv-lib from 0.1.9 to 0.1.12
+
 ### v0.1.7
 - Browse and stream videos from SMB network shares with securely saved connection profiles
 - Load external subtitles directly from SMB shares

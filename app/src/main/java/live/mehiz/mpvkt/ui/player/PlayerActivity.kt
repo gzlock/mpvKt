@@ -164,7 +164,7 @@ class PlayerActivity : AppCompatActivity() {
     player.isExiting = true
     if (isFinishing) MPVLib.command("stop")
     MPVLib.removeObserver(playerObserver)
-    MPVLib.destroy()
+    player.destroy()
     smbRuntime.closePlayback()
 
     super.onDestroy()
@@ -329,6 +329,7 @@ class PlayerActivity : AppCompatActivity() {
 
   private fun setupMPV() {
     copyMPVAssets()
+    MPVLib.attachInstance(player.mpv)
     player.initialize(filesDir.path, cacheDir.path)
     MPVLib.addObserver(playerObserver)
   }

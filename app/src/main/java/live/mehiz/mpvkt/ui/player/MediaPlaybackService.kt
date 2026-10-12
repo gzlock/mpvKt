@@ -61,10 +61,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MPVLib.EventObserver {
   private var audioFocusRequest: AudioFocusRequest? = null
   private var audioFocusCallback: AudioManager.OnAudioFocusChangeListener? = null
 
-  init {
-    MPVLib.addObserver(this)
-  }
-
   @Suppress("EmptyFunctionBlock")
   override fun eventProperty(property: String) {
   }
@@ -109,7 +105,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat(), MPVLib.EventObserver {
   }
 
   @Suppress("EmptyFunctionBlock")
-  override fun event(eventId: Int) {
+  override fun event(eventId: Int, data: MPVNode) {
   }
 
   private var mediaThumbnail: Bitmap? = null
