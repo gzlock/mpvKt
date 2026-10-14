@@ -8,7 +8,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import dev.vivvvek.seeker.Segment
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import live.mehiz.mpvkt.database.entities.CustomButtonEntity
 import live.mehiz.mpvkt.ui.player.Decoder
 import live.mehiz.mpvkt.ui.player.Panels
 import live.mehiz.mpvkt.ui.player.Sheets
@@ -52,7 +51,6 @@ fun PlayerSheets(
   // More sheet
   sleepTimerTimeRemaining: Int,
   onStartSleepTimer: (Int) -> Unit,
-  buttons: ImmutableList<CustomButtonEntity>,
 
   onOpenPanel: (Panels) -> Unit,
   onDismissRequest: () -> Unit,
@@ -117,7 +115,6 @@ fun PlayerSheets(
         onStartTimer = onStartSleepTimer,
         onDismissRequest = onDismissRequest,
         onEnterFiltersPanel = { onOpenPanel(Panels.VideoFilters) },
-        customButtons = buttons,
       )
     }
 
@@ -164,7 +161,6 @@ private fun PlayerSheetsPreview() {
     onResetDefaultSpeed = {},
     sleepTimerTimeRemaining = 0,
     onStartSleepTimer = {},
-    buttons = kotlinx.collections.immutable.persistentListOf(),
     onOpenPanel = {},
     onDismissRequest = {},
   )

@@ -23,21 +23,6 @@ end
 function mpvkt.show_video_filters()
     mp.set_property("user-data/mpvkt/show_panel", "video_filters")
 end
-function mpvkt.set_button_title(text)
-   mp.set_property("user-data/mpvkt/set_button_title", text)
-end
-function mpvkt.reset_button_title(text)
-    mp.set_property("user-data/mpvkt/reset_button_title", "unused")
-end
-function mpvkt.show_button()
-    mp.set_property("user-data/mpvkt/toggle_button", "show")
-end
-function mpvkt.hide_button()
-    mp.set_property("user-data/mpvkt/toggle_button", "hide")
-end
-function mpvkt.toggle_button()
-    mp.set_property("user-data/mpvkt/toggle_button", "toggle")
-end
 function mpvkt.seek_by(value)
     mp.set_property("user-data/mpvkt/seek_by", value)
 end

@@ -6,7 +6,6 @@ import android.media.AudioManager
 import android.net.Uri
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.net.toUri
@@ -19,25 +18,19 @@ import `is`.xyz.mpv.MPVLib
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import live.mehiz.mpvkt.R
-import live.mehiz.mpvkt.database.MpvKtDatabase
-import live.mehiz.mpvkt.database.entities.CustomButtonEntity
 import live.mehiz.mpvkt.preferences.AudioPreferences
 import live.mehiz.mpvkt.preferences.GesturePreferences
 import live.mehiz.mpvkt.preferences.PlayerPreferences
-import live.mehiz.mpvkt.ui.custombuttons.CustomButtonsUiState
-import live.mehiz.mpvkt.ui.custombuttons.getButtons
 import org.koin.java.KoinJavaComponent.inject
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -57,36 +50,7 @@ class PlayerViewModel(
   private val playerPreferences: PlayerPreferences by inject(PlayerPreferences::class.java)
   private val gesturePreferences: GesturePreferences by inject(GesturePreferences::class.java)
   private val audioPreferences: AudioPreferences by inject(AudioPreferences::class.java)
-  private val mpvKtDatabase: MpvKtDatabase by inject(MpvKtDatabase::class.java)
   private val json: Json by inject(Json::class.java)
-
-  init {
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        val buttons = mpvKtDatabase.customButtonDao().getCustomButtons().first()
-        buttons.firstOrNull { it.id == playerPreferences.primaryCustomButtonId.get() }?.let {
-          _primaryButton.update { _ -> it }
-          // If the button text is not empty, it has been set buy a lua script in which
-          // case we don't want to override it
-          if (_primaryButtonTitle.value.isEmpty()) setPrimaryCustomButtonTitle(it)
-        }
-        activity.setupCustomButtons(buttons)
-        _customButtons.update { _ -> CustomButtonsUiState.Success(buttons) }
-      } catch (e: Exception) {
-        Log.e(TAG, e.message ?: "Unable to fetch buttons")
-        _customButtons.update { _ -> CustomButtonsUiState.Error(e.message ?: "Unable to fetch buttons") }
-      }
-    }
-  }
-
-  private val _customButtons = MutableStateFlow<CustomButtonsUiState>(CustomButtonsUiState.Loading)
-  val customButtons = _customButtons.asStateFlow()
-
-  private val _primaryButton = MutableStateFlow<CustomButtonEntity?>(null)
-  val primaryButton = _primaryButton.asStateFlow()
-
-  private val _primaryButtonTitle = MutableStateFlow("")
-  val primaryButtonTitle = _primaryButtonTitle.asStateFlow()
 
   val paused by MPVLib.propBoolean["pause"].collectAsState(viewModelScope)
   val pos by MPVLib.propInt["time-pos"].collectAsState(viewModelScope)
@@ -391,16 +355,6 @@ class PlayerViewModel(
         }
       }
 
-      "set_button_title" -> {
-        _primaryButtonTitle.update { _ -> data }
-      }
-
-      "reset_button_title" -> {
-        _customButtons.value.getButtons().firstOrNull { it.id == playerPreferences.primaryCustomButtonId.get() }?.let {
-          setPrimaryCustomButtonTitle(it)
-        }
-      }
-
       "seek_to_with_text" -> {
         val (seekValue, text) = data.split("|", limit = 2)
         seekToWithText(seekValue.toInt(), text)
@@ -413,21 +367,6 @@ class PlayerViewModel(
 
       "seek_by" -> seekByWithText(data.toInt(), null)
       "seek_to" -> seekToWithText(data.toInt(), null)
-      "toggle_button" -> {
-        fun showButton() {
-          if (_primaryButton.value == null) {
-            _primaryButton.update {
-              customButtons.value.getButtons().firstOrNull { it.id == playerPreferences.primaryCustomButtonId.get() }
-            }
-          }
-        }
-        when (data) {
-          "show" -> showButton()
-          "toggle" if _primaryButton.value != null -> showButton()
-          else -> _primaryButton.update { null }
-        }
-      }
-
       "software_keyboard" -> when (data) {
         "show" -> forceShowSoftwareKeyboard()
         "hide" -> forceHideSoftwareKeyboard()
@@ -543,23 +482,12 @@ class PlayerViewModel(
     }
   }
 
-  fun setPrimaryCustomButtonTitle(button: CustomButtonEntity) {
-    _primaryButtonTitle.update { _ -> button.title }
-  }
 }
 
 data class PlaylistItem(val title: String, val source: String)
 
 fun Float.normalize(inMin: Float, inMax: Float, outMin: Float, outMax: Float): Float {
   return (this - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
-}
-
-fun CustomButtonEntity.execute() {
-  MPVLib.command("script-message", "call_button_$id")
-}
-
-fun CustomButtonEntity.executeLongClick() {
-  MPVLib.command("script-message", "call_button_${id}_long")
 }
 
 fun <T> Flow<T>.collectAsState(scope: CoroutineScope, initialValue: T? = null) =

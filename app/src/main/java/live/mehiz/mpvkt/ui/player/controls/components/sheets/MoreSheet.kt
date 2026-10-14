@@ -2,14 +2,9 @@ package live.mehiz.mpvkt.ui.player.controls.components.sheets
 
 import android.text.format.DateUtils
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -53,28 +48,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import `is`.xyz.mpv.MPVLib
-import kotlinx.collections.immutable.ImmutableList
 import live.mehiz.mpvkt.R
-import live.mehiz.mpvkt.database.entities.CustomButtonEntity
 import live.mehiz.mpvkt.preferences.AdvancedPreferences
 import live.mehiz.mpvkt.preferences.AudioChannels
 import live.mehiz.mpvkt.preferences.AudioPreferences
 import live.mehiz.mpvkt.preferences.PlayerPreferences
 import live.mehiz.mpvkt.preferences.preference.collectAsState
 import live.mehiz.mpvkt.presentation.components.PlayerSheet
-import live.mehiz.mpvkt.ui.player.execute
-import live.mehiz.mpvkt.ui.player.executeLongClick
 import live.mehiz.mpvkt.ui.theme.spacing
 import org.koin.compose.koinInject
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MoreSheet(
   remainingTime: Int,
   onStartTimer: (Int) -> Unit,
   onDismissRequest: () -> Unit,
   onEnterFiltersPanel: () -> Unit,
-  customButtons: ImmutableList<CustomButtonEntity>,
   modifier: Modifier = Modifier,
 ) {
   val advancedPreferences = koinInject<AdvancedPreferences>()
@@ -177,38 +166,6 @@ fun MoreSheet(
         }
       }
 
-      if (customButtons.isNotEmpty()) {
-        Text(text = stringResource(id = R.string.player_sheets_custom_buttons_title))
-        FlowRow(
-          verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
-          horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.smaller),
-          maxItemsInEachRow = Int.MAX_VALUE,
-        ) {
-          customButtons.forEach { button ->
-
-            val inputChipInteractionSource = remember { MutableInteractionSource() }
-
-            Box {
-              FilterChip(
-                onClick = {},
-                label = { Text(text = button.title) },
-                selected = false,
-                interactionSource = inputChipInteractionSource,
-              )
-              Box(
-                modifier = Modifier
-                  .matchParentSize()
-                  .combinedClickable(
-                    onClick = button::execute,
-                    onLongClick = button::executeLongClick,
-                    interactionSource = inputChipInteractionSource,
-                    indication = null,
-                  )
-              )
-            }
-          }
-        }
-      }
       Text(text = stringResource(id = R.string.pref_audio_channels))
       val audioChannels by audioPreferences.audioChannels.collectAsState()
       LazyRow(

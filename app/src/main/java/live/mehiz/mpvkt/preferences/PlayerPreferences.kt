@@ -51,6 +51,4 @@ class PlayerPreferences(
   val playerTimeToDisappear = preferenceStore.getInt("player_time_to_disappear", 4000)
 
   val panelTransparency = preferenceStore.getFloat("panel_transparency", 0.6f)
-
-  val primaryCustomButtonId = preferenceStore.getInt("player_custom_button_id", 0)
 }

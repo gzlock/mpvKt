@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Subtitles
-import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.presentation.Screen
-import live.mehiz.mpvkt.ui.custombuttons.CustomButtonsScreen
 import live.mehiz.mpvkt.ui.smb.SmbProfilesScreen
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
@@ -98,13 +96,6 @@ object PreferencesScreen : Screen {
             summary = { Text(text = stringResource(id = R.string.pref_audio_summary)) },
             icon = { Icon(Icons.Outlined.Audiotrack, null) },
             onClick = { backstack.add(AudioPreferencesScreen) },
-          )
-          preference(
-            key = "customButtons",
-            title = { Text(text = stringResource(id = R.string.pref_custom_buttons_title)) },
-            summary = { Text(text = stringResource(id = R.string.pref_custom_buttons_summary)) },
-            icon = { Icon(Icons.Outlined.Terminal, null) },
-            onClick = { backstack.add(CustomButtonsScreen) },
           )
           preference(
             key = "advanced",

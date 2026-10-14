@@ -48,7 +48,6 @@ import `is`.xyz.mpv.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import live.mehiz.mpvkt.database.entities.CustomButtonEntity
 import live.mehiz.mpvkt.database.entities.PlaybackStateEntity
 import live.mehiz.mpvkt.databinding.PlayerLayoutBinding
 import live.mehiz.mpvkt.domain.playbackstate.repository.PlaybackStateRepository
@@ -379,37 +378,6 @@ class PlayerActivity : AppCompatActivity() {
     File("$scriptsDir/mpvkt.lua")
       .also { if (!it.exists()) it.createNewFile() }
       .writeText(mpvktLua.bufferedReader().readText())
-  }
-
-  fun setupCustomButtons(buttons: List<CustomButtonEntity>) {
-    val applicationPath = filesDir.path
-
-    val scriptsDir = fileManager.createDir(fileManager.fromPath(applicationPath), "scripts")!!
-
-    val customButtonsContent = buildString {
-      appendLine("local lua_modules = mp.find_config_file('scripts')")
-      appendLine("if lua_modules then")
-      appendLine("package.path = package.path .. ';' .. lua_modules .. '/?.lua;' .. lua_modules .. '/?/init.lua'")
-      appendLine("end")
-      appendLine("local mpvkt = require 'mpvkt'")
-      buttons.forEach { button ->
-        appendLine("function button${button.id}()")
-        appendLine(button.content)
-        appendLine("end")
-        appendLine("mp.register_script_message('call_button_${button.id}', button${button.id})")
-        appendLine("function button${button.id}long()")
-        appendLine(button.longPressContent)
-        appendLine("end")
-        appendLine("mp.register_script_message('call_button_${button.id}_long', button${button.id}long)")
-      }
-    }
-
-    val file = File("$scriptsDir/custombuttons.lua")
-      .also { if (!it.exists()) it.createNewFile() }
-
-    file.writeText(customButtonsContent)
-
-    MPVLib.command("load-script", file.absolutePath)
   }
 
   private fun copyMPVFonts() {

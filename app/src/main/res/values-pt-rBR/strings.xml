@@ -207,7 +207,8 @@
     <string name="value_percentage_int" translatable="false">%d%%</string>
     <string name="value_percentage_float" translatable="false">%.2f\%%</string>
 
-    <string name="github_repo_url" translatable="false">https://github.com/abdallahmehiz/mpvKt</string>
+    <!-- Modified in the gzlock/mpvKt fork: use the fork's project link. -->
+    <string name="github_repo_url" translatable="false">https://github.com/gzlock/mpvKt</string>
 
     <plurals name="plural_items">
         <item quantity="one">%1$d item</item>

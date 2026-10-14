@@ -1,5 +1,6 @@
 package live.mehiz.mpvkt.ui.preferences
 
+// Modified in the gzlock/mpvKt fork to expose project attribution and licenses.
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -30,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -88,6 +91,12 @@ object AboutScreen : Screen {
             text = stringResource(id = R.string.app_name),
             style = MaterialTheme.typography.headlineSmall,
           )
+          Text(
+            text = stringResource(id = R.string.pref_about_attribution),
+            modifier = Modifier.padding(horizontal = MaterialTheme.spacing.large),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium,
+          )
         }
         HorizontalDivider()
         ProvidePreferenceLocals {
@@ -105,6 +114,11 @@ object AboutScreen : Screen {
             onClick = {
               clipboard.setText(AnnotatedString(collectDeviceInfo()))
             },
+          )
+          Preference(
+            title = { Text(text = stringResource(id = R.string.pref_about_project_license)) },
+            summary = { Text(text = stringResource(id = R.string.pref_about_project_license_summary)) },
+            onClick = { backstack.add(ProjectLicenseScreen) },
           )
           Preference(
             title = { Text(text = stringResource(id = R.string.pref_about_oss_libraries)) },
@@ -137,6 +151,42 @@ object AboutScreen : Screen {
           }
         }
       }
+    }
+  }
+}
+
+@Serializable
+object ProjectLicenseScreen : Screen {
+  @OptIn(ExperimentalMaterial3Api::class)
+  @Composable
+  override fun Content() {
+    val context = LocalContext.current
+    val backstack = LocalBackStack.current
+    val legalText = remember(context) {
+      listOf("NOTICE", "LICENSE").joinToString(separator = "\n\n") { assetName ->
+        context.assets.open(assetName).bufferedReader().use { it.readText() }
+      }
+    }
+    Scaffold(
+      topBar = {
+        TopAppBar(
+          title = { Text(text = stringResource(R.string.pref_about_project_license)) },
+          navigationIcon = {
+            IconButton(onClick = backstack::removeLastOrNull) {
+              Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
+            }
+          },
+        )
+      },
+    ) { paddingValues ->
+      Text(
+        text = legalText,
+        modifier = Modifier
+          .padding(paddingValues)
+          .padding(MaterialTheme.spacing.large)
+          .verticalScroll(rememberScrollState()),
+        style = MaterialTheme.typography.bodySmall,
+      )
     }
   }
 }

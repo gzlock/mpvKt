@@ -137,21 +137,6 @@
     <string name="pref_advanced_clear_mpv_conf_cache">キャッシュされた mpv 設定を消去する</string>
     <string name="pref_advanced_cleared_mpv_conf_cache">キャッシュされた mpv 設定が消去されました</string>
 
-    <string name="pref_custom_buttons_title">カスタムボタン</string>
-    <string name="pref_custom_buttons_summary">カスタムボタンで Lua コードを実行する</string>
-    <string name="pref_custom_button_action_add">追加</string>
-    <string name="pref_custom_button_action_add_title_text">タイトル</string>
-    <string name="pref_custom_button_action_add_already_exists">ボタンはすでに存在します!</string>
-    <string name="pref_custom_button_action_add_required">*必須</string>
-    <string name="pref_custom_button_action_add_optional">(任意)</string>
-    <string name="pref_custom_button_action_add_content_text">Lua コード</string>
-    <string name="pref_custom_button_action_add_long_press_text">Lua コード (長押し時)</string>
-    <string name="pref_custom_button_add_button">カスタムボタンを追加する</string>
-    <string name="pref_custom_button_empty">カスタムボタンがありません。プラスボタンをタップしてカスタムボタンを追加してください。</string>
-    <string name="pref_custom_button_edit_button">ボタンを編集する</string>
-    <string name="pref_custom_button_edit_button_id">(ID: %d)</string>
-    <string name="pref_custom_button_delete_button">ボタンを削除する</string>
-    <string name="pref_custom_button_delete_confirmation">ボタン「%s」を削除しますか?</string>
 
     <string name="pref_about_title">このアプリについて</string>
     <string name="pref_about_summary">謝辞、ライセンス</string>
@@ -233,7 +218,6 @@
     <string name="player_sheets_more_title">追加設定</string>
     <string name="player_sheets_stats_page_title">デフォルトの統計ページ</string>
     <string name="player_sheets_stats_page_chip">ページ %d</string>
-    <string name="player_sheets_custom_buttons_title">カスタムボタン</string>
     <string name="player_seek_n_seconds">%d 秒</string>
     <string name="player_speed" translatable="false">%.2fx</string>
     <string name="player_gesture_seek_indicator" translatable="false">%c%s\n[%s]</string>
@@ -265,8 +249,9 @@
     <string name="value_percentage_int" translatable="false">%d%%</string>
     <string name="value_percentage_float" translatable="false">%.2f\%%</string>
 
-    <string name="github_repo_url" translatable="false">https://github.com/abdallahmehiz/mpvKt</string>
-    <string name="privacy_policy_url" translatable="false">https://abdallahmehiz.github.io/mpvKt/privacy_policy.html</string>
+    <!-- Modified in the gzlock/mpvKt fork: use the fork's project and policy links. -->
+    <string name="github_repo_url" translatable="false">https://github.com/gzlock/mpvKt</string>
+    <string name="privacy_policy_url" translatable="false">https://github.com/gzlock/mpvKt/blob/main/docs/privacy_policy.html</string>
     <string name="swap_the_volume_and_brightness_slider">音量と明るさのスライダーを入れ替える</string>
     <string name="pref_player_display_reduce_player_animation">プレーヤーのアニメーションを短縮する</string>
     <string name="pref_player_display_hide_player_control_time">プレーヤーコントロールを非表示にするまでの時間</string>

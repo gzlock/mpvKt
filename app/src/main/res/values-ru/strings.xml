@@ -130,20 +130,6 @@
     <string name="pref_advanced_clear_mpv_conf_cache">Очистить кэшированные конфигурации mpv</string>
     <string name="pref_advanced_cleared_mpv_conf_cache">Очищены кэшированные конфигурации mpv</string>
 
-    <string name="pref_custom_buttons_title">Пользовательские кнопки</string>
-    <string name="pref_custom_buttons_summary">Запуск lua кода с помощью пользовательских кнопок</string>
-    <string name="pref_custom_button_action_add">Добавить</string>
-    <string name="pref_custom_button_action_add_title_text">Заголовок</string>
-    <string name="pref_custom_button_action_add_already_exists">Кнопка уже существует!</string>
-    <string name="pref_custom_button_action_add_required">*обязательный</string>
-    <string name="pref_custom_button_action_add_optional">(необязательный)</string>
-    <string name="pref_custom_button_action_add_content_text">Lua код</string>
-    <string name="pref_custom_button_action_add_long_press_text">Lua код (при долгом нажатии)</string>
-    <string name="pref_custom_button_add_button">Добавить пользовательскую кнопку</string>
-    <string name="pref_custom_button_empty">У вас нет пользовательских кнопок. Нажмите кнопку плюс, чтобы добавить пользовательские кнопки.</string>
-    <string name="pref_custom_button_edit_button">Редактировать кнопку</string>
-    <string name="pref_custom_button_delete_button">Удалить кнопку</string>
-    <string name="pref_custom_button_delete_confirmation">Вы хотите удалить кнопку \"%s\"?</string>
 
     <string name="pref_about_title">О приложении</string>
     <string name="pref_about_summary">Благодарности, лицензии</string>
@@ -211,7 +197,6 @@
     <string name="player_sheets_more_title">Больше</string>
     <string name="player_sheets_stats_page_title">Страница статистики по умолчанию</string>
     <string name="player_sheets_stats_page_chip">Стр %d</string>
-    <string name="player_sheets_custom_buttons_title">Пользовательские кнопки</string>
     <string name="player_seek_n_seconds">%d секунды</string>
 
     <string name="player_aspect_fit">Подогнать под экран</string>

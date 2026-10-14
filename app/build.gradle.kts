@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.FilterConfiguration
+import org.gradle.api.tasks.Copy
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.kotlin.dsl.configure
@@ -105,6 +106,16 @@ extensions.configure<ApplicationExtension> {
   }
   buildToolsVersion = "37.0.0"
 }
+
+// Package the project attribution and Apache 2.0 license in every APK.
+val licenseAssetsDirectory = layout.buildDirectory.dir("generated/licenseAssets").get().asFile
+val copyLicenseAssets = tasks.register<Copy>("copyLicenseAssets") {
+  from(rootProject.file("LICENSE"))
+  from(rootProject.file("NOTICE"))
+  into(licenseAssetsDirectory)
+}
+android.sourceSets["main"].assets.srcDir(licenseAssetsDirectory)
+tasks.named("preBuild").configure { dependsOn(copyLicenseAssets) }
 
 room {
   schemaDirectory("$projectDir/schemas")

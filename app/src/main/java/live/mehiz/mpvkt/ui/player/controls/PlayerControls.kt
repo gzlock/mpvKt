@@ -78,7 +78,6 @@ import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.Utils
 import dev.vivvvek.seeker.Segment
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import live.mehiz.mpvkt.R
@@ -88,7 +87,6 @@ import live.mehiz.mpvkt.preferences.preference.collectAsState
 import live.mehiz.mpvkt.preferences.preference.deleteAndGet
 import live.mehiz.mpvkt.preferences.preference.minusAssign
 import live.mehiz.mpvkt.preferences.preference.plusAssign
-import live.mehiz.mpvkt.ui.custombuttons.getButtons
 import live.mehiz.mpvkt.ui.player.Decoder.Companion.getDecoderFromValue
 import live.mehiz.mpvkt.ui.player.Panels
 import live.mehiz.mpvkt.ui.player.PlayerActivity
@@ -164,8 +162,6 @@ fun PlayerControls(
       viewModel.sheetShown.update { Sheets.None }
     }
   }
-  val customButtons by viewModel.customButtons.collectAsState()
-  val customButton by viewModel.primaryButton.collectAsState()
   val playlist by viewModel.playlist.collectAsState()
   val playlistPosition by viewModel.playlistPosition.collectAsState()
   val playlistShown by viewModel.playlistShown.collectAsState()
@@ -542,7 +538,6 @@ fun PlayerControls(
           }
         }
         // Bottom right controls
-        val customButtonTitle by viewModel.primaryButtonTitle.collectAsState()
         AnimatedVisibility(
           controlsShown && !areControlsLocked,
           enter = if (!reduceMotion) {
@@ -563,8 +558,6 @@ fun PlayerControls(
           },
         ) {
           BottomRightPlayerControls(
-            customButton = customButton,
-            customButtonTitle = customButtonTitle,
             isPipAvailable = activity.isPipSupported,
             onPipClick = {
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -668,7 +661,6 @@ fun PlayerControls(
 
       sleepTimerTimeRemaining = sleepTimerTimeRemaining,
       onStartSleepTimer = viewModel::startTimer,
-      buttons = customButtons.getButtons().toImmutableList(),
       onOpenPanel = onOpenPanel,
       onDismissRequest = { onOpenSheet(Sheets.None) },
     )
@@ -744,8 +736,6 @@ private fun PlayerControlsPreview() {
               modifier = Modifier.weight(1f),
             )
             BottomRightPlayerControls(
-              customButton = null,
-              customButtonTitle = "",
               isPipAvailable = true,
               onAspectClick = {},
               onPipClick = {},

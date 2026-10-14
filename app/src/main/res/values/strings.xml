@@ -173,27 +173,16 @@
     <string name="pref_advanced_clear_mpv_conf_cache">Clear cached mpv configurations</string>
     <string name="pref_advanced_cleared_mpv_conf_cache">Cleared cached mpv configurations</string>
 
-    <string name="pref_custom_buttons_title">Custom buttons</string>
-    <string name="pref_custom_buttons_summary">Execute lua code with custom buttons</string>
-    <string name="pref_custom_button_action_add">Add</string>
-    <string name="pref_custom_button_action_add_title_text">Title</string>
-    <string name="pref_custom_button_action_add_already_exists">Button already exists!</string>
-    <string name="pref_custom_button_action_add_required">*required</string>
-    <string name="pref_custom_button_action_add_optional">(optional)</string>
-    <string name="pref_custom_button_action_add_content_text">Lua code</string>
-    <string name="pref_custom_button_action_add_long_press_text">Lua code (on long press)</string>
-    <string name="pref_custom_button_add_button">Add custom button</string>
-    <string name="pref_custom_button_empty">You have no custom buttons. Tap the plus button to add custom buttons.</string>
-    <string name="pref_custom_button_edit_button">Edit button</string>
-    <string name="pref_custom_button_edit_button_id">(ID: %d)</string>
-    <string name="pref_custom_button_delete_button">Delete button</string>
-    <string name="pref_custom_button_delete_confirmation">Do you wish to delete the button \"%s\"?</string>
 
     <string name="pref_about_title">About</string>
     <string name="pref_about_summary">Acknowledgments, licenses</string>
     <string name="pref_about_app_version">App version</string>
     <string name="pref_about_app_version_formatted" translatable="false">%s %s</string>
     <string name="pref_about_oss_libraries">Open source libraries</string>
+    <!-- Modified in the gzlock/mpvKt fork to expose project attribution and licenses. -->
+    <string name="pref_about_project_license">Project license and attribution</string>
+    <string name="pref_about_project_license_summary">Apache License 2.0, original project and fork information</string>
+    <string name="pref_about_attribution">Based on mpvKt by abdallahmehiz\nMaintained by gzlock/mpvKt\nLicensed under the Apache License 2.0</string>
     <string name="pref_about_privacy_policy">Privacy policy</string>
 
     <string name="player_sheets_add_ext_sub">Add external subtitles</string>
@@ -270,7 +259,6 @@
     <string name="player_sheets_more_title">More</string>
     <string name="player_sheets_stats_page_title">Default statistics page</string>
     <string name="player_sheets_stats_page_chip">Page %d</string>
-    <string name="player_sheets_custom_buttons_title">Custom buttons</string>
     <string name="player_seek_n_seconds">%d seconds</string>
     <string name="player_speed" translatable="false">%.2fx</string>
     <string name="player_gesture_seek_indicator" translatable="false">%c%s\n[%s]</string>
@@ -304,8 +292,9 @@
     <string name="value_percentage_int" translatable="false">%d%%</string>
     <string name="value_percentage_float" translatable="false">%.2f\%%</string>
 
-    <string name="github_repo_url" translatable="false">https://github.com/abdallahmehiz/mpvKt</string>
-    <string name="privacy_policy_url" translatable="false">https://abdallahmehiz.github.io/mpvKt/privacy_policy.html</string>
+    <!-- Modified in the gzlock/mpvKt fork: use the fork's project and policy links. -->
+    <string name="github_repo_url" translatable="false">https://github.com/gzlock/mpvKt</string>
+    <string name="privacy_policy_url" translatable="false">https://github.com/gzlock/mpvKt/blob/main/docs/privacy_policy.html</string>
     <string name="swap_the_volume_and_brightness_slider">Swap volume and brightness slider</string>
     <string name="pref_player_display_reduce_player_animation">Reduce player animation</string>
     <string name="pref_player_display_hide_player_control_time">Hide player control time</string>
