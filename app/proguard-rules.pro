@@ -27,5 +27,9 @@
 -dontwarn javax.el.**
 -dontwarn org.ietf.jgss.**
 
+# jcifs-ng derives the NTLM hash with MD4; this Spi is registered into BouncyCastle
+# by class name and instantiated reflectively, so keep it under R8.
+-keep class live.mehiz.mpvkt.network.smb.SmbCrypto$Md4Spi { *; }
+
 -keep class is.xyz.mpv.MPV { *; }
 -keep class is.xyz.mpv.BaseMPVView { *; }

@@ -1,5 +1,6 @@
 package live.mehiz.mpvkt.network.smb
 
+import android.util.Log
 import live.mehiz.mpvkt.ui.player.videoExtensions
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
@@ -18,18 +19,30 @@ class SmbRuntime(
   fun connect(profile: SmbProfile): SmbConnection =
     connections.getOrPut(ConnectionKey(profile.id, profile.share)) { SmbConnection(profile) }
 
-  fun authenticate(profile: SmbProfile) = SmbConnection.authenticate(profile)
+  fun authenticate(profile: SmbProfile, onStage: (SmbAuthStage) -> Unit = {}) =
+    SmbConnection.authenticate(profile, onStage)
 
   /** Kept for callers outside the editor; authentication does not require a selected share. */
   fun test(profile: SmbProfile): Result<Unit> = runCatching { authenticate(profile) }
 
-  fun browsableShares(profile: SmbProfile): List<String> = shareEnumerator.enumerate(profile)
-    .filterNot { it.endsWith("$", ignoreCase = true) }
-    .filter { share ->
+  fun browsableShares(profile: SmbProfile): List<String> {
+    val enumerated = shareEnumerator.enumerate(profile)
+      .map { it.trim() }
+      .filterNot { it.isBlank() || it.endsWith("$", ignoreCase = true) }
+      .distinctBy(String::lowercase)
+    val verified = enumerated.filter { share ->
       runCatching {
-        SmbConnection(profile.copy(share = share)).use { it.list(profile.startPath) }
-      }.isSuccess
+        // Verify the share root only: the configured startPath may not exist on every
+        // share and must not be a reason to hide an otherwise available share.
+        SmbConnection(profile.copy(share = share)).use { it.list("") }
+      }
+        .onFailure { Log.w(TAG, "Share '$share' failed verification on ${profile.host}:${profile.port}", it) }
+        .isSuccess
     }
+    // If verification rejected everything (transient dialect/permission hiccup), fall back
+    // to the raw enumerated list instead of showing an empty share list.
+    return verified.ifEmpty { enumerated }
+  }
 
   fun list(profile: SmbProfile, path: String): List<SmbEntry> = connect(profile).list(path)
 
@@ -86,4 +99,7 @@ class SmbRuntime(
 
   private data class ConnectionKey(val profileId: String, val share: String)
 
+  private companion object {
+    const val TAG = "mpvkt-smb"
+  }
 }

@@ -20,6 +20,15 @@ data class SmbEntry(
   val modifiedTime: Long = 0L,
 )
 
+/** Stages reported by [SmbConnection.authenticate] so callers can show progress steps. */
+enum class SmbAuthStage {
+  /** Opening the TCP connection and performing the SMB protocol negotiation. */
+  CONNECTING,
+
+  /** Sending the credentials and setting up the authenticated session. */
+  AUTHENTICATING,
+}
+
 class SmbConnection(private val profile: SmbProfile) : Closeable {
   private val client = SMBClient()
   private val connection = client.connect(profile.host, profile.port)
@@ -62,9 +71,11 @@ class SmbConnection(private val profile: SmbProfile) : Closeable {
 
   companion object {
     /** Connects and authenticates without requiring a disk share name. */
-    fun authenticate(profile: SmbProfile) {
+    fun authenticate(profile: SmbProfile, onStage: (SmbAuthStage) -> Unit = {}) {
       SMBClient().use { client ->
+        onStage(SmbAuthStage.CONNECTING)
         client.connect(profile.host, profile.port).use { connection ->
+          onStage(SmbAuthStage.AUTHENTICATING)
           connection.authenticate(profile.authenticationContext()).use { }
         }
       }

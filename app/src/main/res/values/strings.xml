@@ -32,6 +32,9 @@
     <string name="smb_anonymous">Anonymous access</string>
     <string name="smb_test">Test</string>
     <string name="smb_save">Save</string>
+    <string name="smb_save_step_connect">Connecting to server</string>
+    <string name="smb_save_step_authenticate">Verifying credentials</string>
+    <string name="smb_save_step_save">Saving connection</string>
     <string name="smb_connection_ok">connection successful</string>
     <string name="smb_connection_failed">connection failed</string>
     <string name="smb_sort">Sort</string>

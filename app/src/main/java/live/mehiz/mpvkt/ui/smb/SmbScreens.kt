@@ -8,6 +8,7 @@ import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +27,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
@@ -64,6 +68,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.R
+import live.mehiz.mpvkt.network.smb.SmbAuthStage
 import live.mehiz.mpvkt.network.smb.SmbEntry
 import live.mehiz.mpvkt.network.smb.SmbBrowserPreferences
 import live.mehiz.mpvkt.network.smb.SmbPlaybackItem
@@ -218,10 +223,14 @@ data class SmbProfileEditorScreen(
     SmbProfileEditor(
       initial = profile,
       onDismiss = { backstack.removeLastOrNull() },
-      onSave = { candidate ->
+      onSave = { candidate, reportStep ->
         runCatching {
           withContext(Dispatchers.IO) {
-            runtime.authenticate(candidate)
+            reportStep(SmbSaveStep.CONNECT)
+            runtime.authenticate(candidate) { stage ->
+              if (stage == SmbAuthStage.AUTHENTICATING) reportStep(SmbSaveStep.AUTHENTICATE)
+            }
+            reportStep(SmbSaveStep.SAVE)
             store.save(candidate)
           }
         }.fold(
@@ -242,7 +251,7 @@ data class SmbProfileEditorScreen(
 private fun SmbProfileEditor(
   initial: SmbProfile?,
   onDismiss: () -> Unit,
-  onSave: suspend (SmbProfile) -> String?,
+  onSave: suspend (SmbProfile, reportStep: (SmbSaveStep) -> Unit) -> String?,
 ) {
   val scope = rememberCoroutineScope()
   var name by remember { mutableStateOf(initial?.name.orEmpty()) }
@@ -255,6 +264,8 @@ private fun SmbProfileEditor(
   var anonymous by remember { mutableStateOf(initial?.anonymous ?: false) }
   var busy by remember { mutableStateOf(false) }
   var status by remember(initial?.id) { mutableStateOf<String?>(null) }
+  var activeStep by remember { mutableStateOf<SmbSaveStep?>(null) }
+  var completedSteps by remember { mutableStateOf(setOf<SmbSaveStep>()) }
   val connectionFailedText = stringResource(R.string.smb_connection_failed)
   fun profile() = SmbProfile(
     id = initial?.id ?: java.util.UUID.randomUUID().toString(), name = name.trim(), host = host.trim(),
@@ -305,13 +316,45 @@ private fun SmbProfileEditor(
                 (port.toIntOrNull()?.let { it in 1..65535 } == true),
               onClick = {
                 busy = true
+                status = null
+                activeStep = SmbSaveStep.CONNECT
+                completedSteps = emptySet()
                 scope.launch {
-                  status = runCatching { onSave(profile()) }
-                    .fold({ it }, { it.message ?: connectionFailedText })
+                  val failure = runCatching {
+                    onSave(profile()) { step ->
+                      // Every step before the reported one has finished.
+                      completedSteps = SmbSaveStep.entries.takeWhile { it != step }.toSet()
+                      activeStep = step
+                    }
+                  }.fold({ it }, { it.message ?: connectionFailedText })
+                  status = failure
                   busy = false
+                  if (failure == null) {
+                    activeStep = null
+                    completedSteps = emptySet()
+                  }
                 }
               },
             ) { Text(stringResource(R.string.smb_save)) }
+          }
+        }
+        if (activeStep != null || completedSteps.isNotEmpty()) {
+          Column(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalAlignment = Alignment.Start,
+          ) {
+            SmbSaveStep.entries.forEach { step ->
+              val state = when {
+                step in completedSteps -> SaveStepState.DONE
+                step == activeStep && busy -> SaveStepState.IN_PROGRESS
+                step == activeStep -> SaveStepState.FAILED
+                else -> SaveStepState.PENDING
+              }
+              SaveStepRow(step = step, state = state)
+            }
           }
         }
         status?.let {
@@ -590,17 +633,17 @@ data class SmbBrowserScreen(
         if (loading) CircularProgressIndicator(Modifier.padding(24.dp))
         if (!loading) {
           when {
-            // Keep enumeration failures user-readable: the server may deny share listing,
-            // but a manually entered share can still be usable.
-            selectingShare && profile != null && (error != null || shares.isEmpty()) -> {
-              Text(noSharesText, Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
+            // Show the real enumeration/authentication error first; the server may deny
+            // share listing, but a manually entered share can still be usable.
+            error != null -> {
+              Text(error!!, Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
               Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
                 TextButton(onClick = { retryKey++ }) { Text(retryText) }
                 TextButton(onClick = { manualShareDialogShown = true }) { Text(enterShareText) }
               }
             }
-            error != null -> {
-              Text(error!!, Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
+            selectingShare && shares.isEmpty() -> {
+              Text(noSharesText, Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
               Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
                 TextButton(onClick = { retryKey++ }) { Text(retryText) }
                 TextButton(onClick = { manualShareDialogShown = true }) { Text(enterShareText) }
@@ -722,6 +765,63 @@ data class SmbBrowserScreen(
 }
 
 private val subtitleExtensions = setOf("srt", "ass", "ssa", "vtt", "sub")
+
+/** Steps shown under the button bar while the editor saves a connection. */
+private enum class SmbSaveStep { CONNECT, AUTHENTICATE, SAVE }
+
+private enum class SaveStepState { PENDING, IN_PROGRESS, DONE, FAILED }
+
+@Composable
+private fun SaveStepRow(step: SmbSaveStep, state: SaveStepState) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(10.dp),
+  ) {
+    Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) {
+      when (state) {
+        SaveStepState.IN_PROGRESS -> CircularProgressIndicator(
+          modifier = Modifier.size(16.dp),
+          strokeWidth = 2.dp,
+        )
+        SaveStepState.DONE -> Icon(
+          Icons.Default.Check,
+          contentDescription = null,
+          modifier = Modifier.size(16.dp),
+          tint = MaterialTheme.colorScheme.primary,
+        )
+        SaveStepState.FAILED -> Icon(
+          Icons.Default.Close,
+          contentDescription = null,
+          modifier = Modifier.size(16.dp),
+          tint = MaterialTheme.colorScheme.error,
+        )
+        SaveStepState.PENDING -> Box(
+          Modifier
+            .size(6.dp)
+            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), CircleShape),
+        )
+      }
+    }
+    Text(
+      text = step.label(),
+      style = MaterialTheme.typography.bodyMedium,
+      color = when (state) {
+        SaveStepState.DONE -> MaterialTheme.colorScheme.onSurfaceVariant
+        SaveStepState.PENDING -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        SaveStepState.IN_PROGRESS -> MaterialTheme.colorScheme.onSurface
+        SaveStepState.FAILED -> MaterialTheme.colorScheme.error
+      },
+    )
+  }
+}
+
+@Composable
+private fun SmbSaveStep.label(): String = when (this) {
+  SmbSaveStep.CONNECT -> stringResource(R.string.smb_save_step_connect)
+  SmbSaveStep.AUTHENTICATE -> stringResource(R.string.smb_save_step_authenticate)
+  SmbSaveStep.SAVE -> stringResource(R.string.smb_save_step_save)
+}
 
 private fun LazyListState.toSmbDirectoryScrollPosition(): SmbDirectoryScrollPosition {
   val index = firstVisibleItemIndex

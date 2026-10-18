@@ -295,15 +295,15 @@ class PlayerViewModel(
       }
 
       VideoAspect.Stretch -> {
-        val size = Point()
-        val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-          activity.display
+        ratio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+          val bounds = activity.windowManager.currentWindowMetrics.bounds
+          if (bounds.height() > 0) bounds.width() / bounds.height().toDouble() else ratio
         } else {
-          @Suppress("DEPRECATION") // API 30 以下没有 Context.getDisplay()
-          activity.windowManager.defaultDisplay
+          val size = Point()
+          @Suppress("DEPRECATION") // API 30 以下没有 currentWindowMetrics，沿用 getRealSize
+          activity.windowManager.defaultDisplay.getRealSize(size)
+          if (size.y > 0) size.x / size.y.toDouble() else ratio
         }
-        display?.getRealSize(size)
-        ratio = if (size.y > 0) size.x / size.y.toDouble() else ratio
         pan = 0.0
       }
     }

@@ -18,6 +18,9 @@
     <string name="smb_anonymous">Acesso anônimo</string>
     <string name="smb_test">Testar</string>
     <string name="smb_save">Salvar</string>
+    <string name="smb_save_step_connect">Conectando ao servidor</string>
+    <string name="smb_save_step_authenticate">Verificando credenciais</string>
+    <string name="smb_save_step_save">Salvando conexão</string>
     <string name="smb_connection_ok">conexão bem-sucedida</string>
     <string name="smb_connection_failed">falha na conexão</string>
     <string name="smb_sort">Ordenar</string>
