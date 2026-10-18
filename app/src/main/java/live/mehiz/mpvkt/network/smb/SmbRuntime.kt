@@ -20,7 +20,12 @@ class SmbRuntime(
     connections.getOrPut(ConnectionKey(profile.id, profile.share)) { SmbConnection(profile) }
 
   fun authenticate(profile: SmbProfile, onStage: (SmbAuthStage) -> Unit = {}) =
-    SmbConnection.authenticate(profile, onStage)
+    try {
+      SmbConnection.authenticate(profile, onStage)
+    } catch (t: Throwable) {
+      Log.w(TAG, "SMB authenticate failed on ${profile.host}:${profile.port}", t)
+      throw t
+    }
 
   /** Kept for callers outside the editor; authentication does not require a selected share. */
   fun test(profile: SmbProfile): Result<Unit> = runCatching { authenticate(profile) }

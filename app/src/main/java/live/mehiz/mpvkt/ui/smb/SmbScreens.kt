@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -290,6 +291,8 @@ private fun SmbProfileEditor(
       Column(
         modifier = Modifier
           .fillMaxWidth()
+          // 工作状态（保存中）底部栏会被步骤行/状态文字撑高，需避让系统导航栏 safe area。
+          .navigationBarsPadding()
           .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.End,
       ) {

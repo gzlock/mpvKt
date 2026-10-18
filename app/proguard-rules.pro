@@ -27,9 +27,24 @@
 -dontwarn javax.el.**
 -dontwarn org.ietf.jgss.**
 
-# jcifs-ng derives the NTLM hash with MD4; this Spi is registered into BouncyCastle
-# by class name and instantiated reflectively, so keep it under R8.
--keep class live.mehiz.mpvkt.network.smb.SmbCrypto$Md4Spi { *; }
+# smbj wires transport/auth/exception classes through factories; R8 strips them otherwise
+# (AuthenticationContext, DirectTcpTransportFactory, SMBException, BCSecurityProvider, ...),
+# which surfaces as "socket closed" during authenticate on release builds.
+-keep class com.hierynomus.** { *; }
+-dontwarn com.hierynomus.**
+
+# smbj event bus (mbassador/mbassy) reflectively instantiates ReflectiveHandlerInvocation
+# via its SubscriptionContext constructor; R8 removes the constructor otherwise.
+-keep class net.engio.** { *; }
+-dontwarn net.engio.**
+
+# jcifs-ng share enumeration protocol, NTLM and signing classes are reached dynamically.
+-keep class jcifs.** { *; }
+-dontwarn jcifs.**
+
+# jcifs-ng needs MD4 (NTLM hash) and AESCMAC (SMB3 signing); these Spis are registered
+# into BouncyCastle by class name and instantiated reflectively, so keep them under R8.
+-keep class live.mehiz.mpvkt.network.smb.SmbCrypto$* { *; }
 
 -keep class is.xyz.mpv.MPV { *; }
 -keep class is.xyz.mpv.BaseMPVView { *; }

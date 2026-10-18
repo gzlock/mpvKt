@@ -6,6 +6,7 @@ import jcifs.context.BaseContext
 import jcifs.smb.NtlmPasswordAuthenticator
 import jcifs.smb.SmbFile
 import org.junit.Assume.assumeTrue
+import org.junit.BeforeClass
 import org.junit.Test
 import java.util.Properties
 import org.junit.Assert.assertFalse
@@ -73,11 +74,9 @@ class SmbConnectionIntegrationTest {
     val credentials = if (anonymous) {
       NtlmPasswordAuthenticator()
     } else {
-      NtlmPasswordAuthenticator(
-        System.getenv("SMB_TEST_DOMAIN").orEmpty(),
-        username,
-        password,
-      )
+      // Match production: a blank domain means no domain, not an empty string.
+      val domain = System.getenv("SMB_TEST_DOMAIN")?.takeIf { it.isNotBlank() }
+      NtlmPasswordAuthenticator(domain, username, password)
     }
     val context: CIFSContext = BaseContext(PropertyConfiguration(properties))
       .withCredentials(credentials)
@@ -101,5 +100,12 @@ class SmbConnectionIntegrationTest {
         "${autoBrowsableShares.size} ordinary shares, " +
         "${shares.size - autoBrowsableShares.size} hidden or non-disk shares",
     )
+  }
+
+  companion object {
+    // Modern BC no longer registers MD4/AESCMAC; jcifs needs both for NTLM and SMB3 signing.
+    @JvmStatic
+    @BeforeClass
+    fun initCrypto() = SmbCrypto.ensureProvider()
   }
 }
