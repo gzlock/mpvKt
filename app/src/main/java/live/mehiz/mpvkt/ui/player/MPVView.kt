@@ -113,7 +113,9 @@ class MPVView(context: Context, attributes: AttributeSet) : BaseMPVView(context,
 
   @Suppress("ReturnCount")
   fun onKey(event: KeyEvent): Boolean {
-    if (event.action == KeyEvent.ACTION_MULTIPLE || KeyEvent.isModifierKey(event.keyCode)) {
+    @Suppress("DEPRECATION") // KeyEvent.ACTION_MULTIPLE 自 API 29 弃用；minSdk 24 设备上仍可能收到该事件
+    val isMultipleAction = event.action == KeyEvent.ACTION_MULTIPLE
+    if (isMultipleAction || KeyEvent.isModifierKey(event.keyCode)) {
       return false
     }
 

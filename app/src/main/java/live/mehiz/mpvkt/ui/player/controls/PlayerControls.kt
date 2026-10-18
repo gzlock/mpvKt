@@ -1,6 +1,5 @@
 package live.mehiz.mpvkt.ui.player.controls
 
-import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -431,7 +430,7 @@ fun PlayerControls(
           SeekbarWithTimers(
             position = position?.toFloat() ?: 0f,
             duration = duration?.toFloat() ?: 0f,
-            remaining = remaining?.toFloat() ?: 0f,
+            remaining = remaining ?: 0f,
             readAheadValue = readAhead ?: 0f,
             onValueChange = {
               isSeeking = true
@@ -560,11 +559,7 @@ fun PlayerControls(
           BottomRightPlayerControls(
             isPipAvailable = activity.isPipSupported,
             onPipClick = {
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                activity.enterPictureInPictureMode(activity.createPipParams())
-              } else {
-                activity.enterPictureInPictureMode()
-              }
+              activity.enterPip()
             },
             onAspectClick = {
               viewModel.changeVideoAspect(
@@ -625,10 +620,7 @@ fun PlayerControls(
       subtitles = subtitles,
       onAddSubtitle = viewModel::addSubtitle,
       onPickSmbSubtitle = {
-        activity.startActivityForResult(
-          activity.createSmbSubtitlePickerIntent(),
-          PlayerActivity.SMB_SUBTITLE_REQUEST,
-        )
+        activity.launchSmbSubtitlePicker()
       },
       onSelectSubtitle = viewModel::selectSub,
       audioTracks = audioTracks,

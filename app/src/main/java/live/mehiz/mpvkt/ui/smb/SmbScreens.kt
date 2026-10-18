@@ -1,6 +1,8 @@
 package live.mehiz.mpvkt.ui.smb
 
 import android.content.Intent
+import android.content.Context
+import android.content.ContextWrapper
 import android.app.Activity
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -12,9 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -39,12 +43,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -85,10 +93,18 @@ data class SmbProfilesScreen(
     val runtime = koinInject<SmbRuntime>()
     val loadedProfiles = remember { runCatching { store.getProfiles() } }
     var profiles by remember { mutableStateOf(loadedProfiles.getOrDefault(emptyList())) }
-    var editing by remember { mutableStateOf<SmbProfile?>(null) }
-    var showEditor by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf(loadedProfiles.exceptionOrNull()?.message) }
     var initialDirectoryOpened by remember { mutableStateOf(false) }
+    LaunchedEffect(backstack.size) {
+      if (backstack.lastOrNull() is SmbProfilesScreen) {
+        runCatching { store.getProfiles() }
+          .onSuccess {
+            profiles = it
+            message = null
+          }
+          .onFailure { message = it.message }
+      }
+    }
     LaunchedEffect(initialProfileId, initialPath, initialShare, profiles) {
       if (!initialDirectoryOpened && subtitlePicker && initialProfileId != null) {
         profiles.firstOrNull { it.id == initialProfileId }?.let { profile ->
@@ -98,7 +114,7 @@ data class SmbProfilesScreen(
               profileId = profile.id,
               path = initialPath ?: profile.startPath,
               subtitlePicker = true,
-              shareName = initialShare?.takeIf { it.isNotBlank() },
+              shareName = (initialShare ?: profile.share).takeIf { it.isNotBlank() },
             ),
           )
         }
@@ -123,7 +139,7 @@ data class SmbProfilesScreen(
             }
           },
           actions = {
-            IconButton(onClick = { editing = null; showEditor = true }) {
+            IconButton(onClick = { backstack.add(SmbProfileEditorScreen()) }) {
               Icon(Icons.Default.Add, stringResource(R.string.smb_add_profile))
             }
           },
@@ -138,11 +154,18 @@ data class SmbProfilesScreen(
             items(profiles, key = { it.id }) { profile ->
               Row(
                 Modifier.fillMaxWidth().clickable {
+                  // A manually entered share is persisted after the browser is opened. Read
+                  // the latest profile here because this screen may remain in the back stack
+                  // while the browser updates the stored value.
+                  val latestProfile = runCatching {
+                    store.getProfiles().firstOrNull { it.id == profile.id }
+                  }.getOrNull() ?: profile
                   backstack.add(
                     SmbBrowserScreen(
-                      profileId = profile.id,
-                      path = profile.startPath,
+                      profileId = latestProfile.id,
+                      path = latestProfile.startPath,
                       subtitlePicker = subtitlePicker,
+                      shareName = latestProfile.share.takeIf { it.isNotBlank() },
                     ),
                   )
                 }.padding(horizontal = 20.dp, vertical = 14.dp),
@@ -154,7 +177,7 @@ data class SmbProfilesScreen(
                   Text(profile.name)
                   Text("${profile.host}:${profile.port}")
                 }
-                IconButton(onClick = { editing = profile; showEditor = true }) {
+                IconButton(onClick = { backstack.add(SmbProfileEditorScreen(profile.id)) }) {
                   Icon(Icons.Default.Edit, stringResource(R.string.smb_edit_profile))
                 }
                 IconButton(onClick = {
@@ -173,32 +196,48 @@ data class SmbProfilesScreen(
         if (message != null) Text(message!!, Modifier.padding(20.dp))
       }
     }
-    if (showEditor) {
-      SmbProfileEditor(
-        initial = editing,
-        onDismiss = { showEditor = false },
-        onSave = { candidate ->
-          runCatching {
-            withContext(Dispatchers.IO) {
-              runtime.authenticate(candidate)
-              store.save(candidate)
-              store.getProfiles()
-            }
-          }.onSuccess {
-            runtime.forgetProfile(candidate.id)
-            profiles = it
-            showEditor = false
-            message = null
-          }.fold(
-            onSuccess = { null },
-            onFailure = { it.message ?: context.getString(R.string.smb_connection_failed) },
-          )
-        },
-      )
-    }
   }
 }
 
+@Serializable
+data class SmbProfileEditorScreen(
+  val profileId: String? = null,
+) : Screen {
+  @OptIn(ExperimentalMaterial3Api::class)
+  @Composable
+  override fun Content() {
+    val backstack = LocalBackStack.current
+    val store = koinInject<SmbProfileStore>()
+    val runtime = koinInject<SmbRuntime>()
+    val connectionFailedText = stringResource(R.string.smb_connection_failed)
+    val profile = remember(profileId) {
+      runCatching {
+        profileId?.let { id -> store.getProfiles().firstOrNull { it.id == id } }
+      }.getOrNull()
+    }
+    SmbProfileEditor(
+      initial = profile,
+      onDismiss = { backstack.removeLastOrNull() },
+      onSave = { candidate ->
+        runCatching {
+          withContext(Dispatchers.IO) {
+            runtime.authenticate(candidate)
+            store.save(candidate)
+          }
+        }.fold(
+          onSuccess = {
+            runtime.forgetProfile(candidate.id)
+            backstack.removeLastOrNull()
+            null
+          },
+          onFailure = { it.message ?: connectionFailedText },
+        )
+      },
+    )
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SmbProfileEditor(
   initial: SmbProfile?,
@@ -219,57 +258,136 @@ private fun SmbProfileEditor(
   val connectionFailedText = stringResource(R.string.smb_connection_failed)
   fun profile() = SmbProfile(
     id = initial?.id ?: java.util.UUID.randomUUID().toString(), name = name.trim(), host = host.trim(),
-    // A share is selected after the connection is opened and is never part of the saved profile.
-    port = port.toIntOrNull() ?: 445, share = "", startPath = startPath.trim('/'),
+    // Keep a share previously entered from the browser when saving the connection again.
+    port = port.toIntOrNull() ?: 445, share = initial?.share.orEmpty(), startPath = startPath.trim('/'),
     username = username, domain = domain, password = password, anonymous = anonymous,
   )
-  AlertDialog(
-    onDismissRequest = onDismiss,
-    title = { Text(stringResource(if (initial == null) R.string.smb_add_profile else R.string.smb_edit_profile)) },
-    text = {
-      Column(
-        modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
-        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.smb_name)) }, singleLine = true)
-        OutlinedTextField(host, { host = it }, label = { Text(stringResource(R.string.smb_host)) }, singleLine = true)
-        OutlinedTextField(port, { port = it }, label = { Text(stringResource(R.string.smb_port)) }, singleLine = true)
-        OutlinedTextField(startPath, { startPath = it }, label = { Text(stringResource(R.string.smb_start_path)) }, singleLine = true)
-        OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.smb_username)) }, singleLine = true)
-        OutlinedTextField(domain, { domain = it }, label = { Text(stringResource(R.string.smb_domain)) }, singleLine = true)
-        OutlinedTextField(
-          password,
-          { password = it },
-          label = { Text(stringResource(R.string.smb_password)) },
-          singleLine = true,
-          visualTransformation = PasswordVisualTransformation(),
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-          androidx.compose.material3.Checkbox(anonymous, { anonymous = it })
-          Text(stringResource(R.string.smb_anonymous))
-        }
-        if (busy) CircularProgressIndicator()
-        status?.let { Text(it) }
-      }
-    },
-    confirmButton = {
-      TextButton(
-        enabled = !busy && name.isNotBlank() && host.isNotBlank() &&
-          (port.toIntOrNull()?.let { it in 1..65535 } == true),
-        onClick = {
-          busy = true
-          scope.launch {
-            status = runCatching { onSave(profile()) }
-              .fold({ it }, { it.message ?: connectionFailedText })
-            busy = false
+  Scaffold(
+    topBar = {
+      TopAppBar(
+        title = {
+          Text(stringResource(if (initial == null) R.string.smb_add_profile else R.string.smb_edit_profile))
+        },
+        navigationIcon = {
+          IconButton(enabled = !busy, onClick = onDismiss) {
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
           }
         },
-      ) { Text(stringResource(R.string.smb_save)) }
+      )
     },
-    dismissButton = {
-      TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+    bottomBar = {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.End,
+      ) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          TextButton(enabled = !busy, onClick = onDismiss) {
+            Text(stringResource(android.R.string.cancel))
+          }
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+          ) {
+            if (busy) {
+              CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+              )
+            }
+            TextButton(
+              enabled = !busy && name.isNotBlank() && host.isNotBlank() &&
+                (port.toIntOrNull()?.let { it in 1..65535 } == true),
+              onClick = {
+                busy = true
+                scope.launch {
+                  status = runCatching { onSave(profile()) }
+                    .fold({ it }, { it.message ?: connectionFailedText })
+                  busy = false
+                }
+              },
+            ) { Text(stringResource(R.string.smb_save)) }
+          }
+        }
+        status?.let {
+          Text(
+            text = it,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            color = MaterialTheme.colorScheme.error,
+          )
+        }
+      }
     },
-  )
+  ) { padding ->
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(padding)
+        .verticalScroll(rememberScrollState())
+        .padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      OutlinedTextField(
+        name,
+        { name = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.smb_name)) },
+        singleLine = true,
+      )
+      OutlinedTextField(
+        host,
+        { host = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.smb_host)) },
+        singleLine = true,
+      )
+      OutlinedTextField(
+        port,
+        { port = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.smb_port)) },
+        singleLine = true,
+      )
+      OutlinedTextField(
+        startPath,
+        { startPath = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.smb_start_path)) },
+        singleLine = true,
+      )
+      OutlinedTextField(
+        username,
+        { username = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.smb_username)) },
+        singleLine = true,
+      )
+      OutlinedTextField(
+        domain,
+        { domain = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.smb_domain)) },
+        singleLine = true,
+      )
+      OutlinedTextField(
+        password,
+        { password = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.smb_password)) },
+        singleLine = true,
+        visualTransformation = PasswordVisualTransformation(),
+      )
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        androidx.compose.material3.Checkbox(anonymous, { anonymous = it })
+        Text(stringResource(R.string.smb_anonymous))
+      }
+    }
+  }
 }
 
 @Serializable
@@ -285,7 +403,13 @@ data class SmbBrowserScreen(
     val context = LocalContext.current
     val backstack = LocalBackStack.current
     val runtime = koinInject<SmbRuntime>()
+    val profileStore = koinInject<SmbProfileStore>()
     val browserPreferences = koinInject<SmbBrowserPreferences>()
+    val browserViewModel = remember(context) {
+      val owner = context.findViewModelStoreOwner()
+        ?: error("SMB browser must be hosted by a ViewModelStoreOwner")
+      ViewModelProvider(owner)[SmbBrowserViewModel::class.java]
+    }
     val profile = runtime.profiles().firstOrNull { it.id == profileId }
     val selectingShare = shareName.isNullOrBlank()
     var shares by remember(profileId) { mutableStateOf<List<String>>(emptyList()) }
@@ -294,7 +418,7 @@ data class SmbBrowserScreen(
     var loading by remember { mutableStateOf(true) }
     var retryKey by remember { mutableStateOf(0) }
     var manualShareDialogShown by remember { mutableStateOf(false) }
-    var manualShareName by remember { mutableStateOf("") }
+    var manualShareName by remember(profileId, shareName) { mutableStateOf(shareName.orEmpty()) }
     var sortOrder by remember(profileId, shareName, path) {
       mutableStateOf(
         runCatching {
@@ -315,6 +439,20 @@ data class SmbBrowserScreen(
     var sortMenuShown by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+
+    fun saveListPosition() {
+      browserViewModel.saveScrollPosition(
+        profileId = profileId,
+        shareName = shareName.orEmpty(),
+        path = path,
+        position = listState.toSmbDirectoryScrollPosition(),
+      )
+    }
+
+    DisposableEffect(profileId, shareName, path, listState) {
+      onDispose { saveListPosition() }
+    }
+
     LaunchedEffect(sortOrder) {
       listState.scrollToItem(0)
     }
@@ -356,6 +494,36 @@ data class SmbBrowserScreen(
         if (directoryOrder != 0) directoryOrder else itemComparator.compare(left, right)
       })
     }
+
+    LaunchedEffect(profileId, shareName, path, retryKey, loading, error, sortedEntries, shares) {
+      if (loading || error != null) return@LaunchedEffect
+
+      // The list is composed with the newly loaded entries before applying the saved position.
+      withFrameNanos { }
+
+      val savedPosition = browserViewModel.scrollPosition(
+        profileId = profileId,
+        shareName = shareName.orEmpty(),
+        path = path,
+      ) ?: SmbDirectoryScrollPosition(index = 0, offsetPx = 0)
+
+      // Both the share list and the directory list restore their own saved position.
+      val restoreItems = if (selectingShare) shares else sortedEntries
+      if (restoreItems.isNotEmpty()) {
+        val anchorIndex = savedPosition.anchorPath
+          ?.let { anchor ->
+            if (selectingShare) shares.indexOf(anchor).takeIf { it >= 0 }
+            else sortedEntries.indexOfFirst { it.path == anchor }.takeIf { it >= 0 }
+          }
+          ?: savedPosition.index
+
+        listState.scrollToItem(
+          index = anchorIndex.coerceIn(0, restoreItems.lastIndex),
+          scrollOffset = savedPosition.offsetPx.coerceAtLeast(0),
+        )
+      }
+    }
+
     Scaffold(
       topBar = {
         TopAppBar(
@@ -366,7 +534,12 @@ data class SmbBrowserScreen(
               } ?: stringResource(R.string.smb_browser_title),
             )
           },
-          navigationIcon = { IconButton(onClick = backstack::removeLastOrNull) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, null) } },
+          navigationIcon = {
+            IconButton(onClick = {
+              saveListPosition()
+              backstack.removeLastOrNull()
+            }) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, null) }
+          },
           actions = {
             if (!selectingShare) {
               IconButton(onClick = { sortMenuShown = true }) {
@@ -393,6 +566,14 @@ data class SmbBrowserScreen(
                       )
                     },
                     onClick = {
+                      if (order != sortOrder) {
+                        browserViewModel.saveScrollPosition(
+                          profileId = profileId,
+                          shareName = shareName.orEmpty(),
+                          path = path,
+                          position = SmbDirectoryScrollPosition(index = 0, offsetPx = 0),
+                        )
+                      }
                       sortOrder = order
                       browserPreferences.setSortOrder(profileId, shareName.orEmpty(), path, order.name)
                       sortMenuShown = false
@@ -450,13 +631,22 @@ data class SmbBrowserScreen(
             else -> {
               if (path.isNotBlank()) {
                 Text(stringResource(R.string.smb_parent_directory), Modifier.fillMaxWidth().clickable {
-                  val parent = path.trim('/').substringBeforeLast('/', "")
-                  backstack.add(SmbBrowserScreen(profileId, parent, subtitlePicker, shareName))
+                  saveListPosition()
+                  val parentPath = path.trim('/').substringBeforeLast('/', "")
+                  val parentScreen = SmbBrowserScreen(profileId, parentPath, subtitlePicker, shareName)
+                  // 返回上级：栈顶下方正好是父目录时 pop（父目录经 ViewModel 恢复滚动位置），
+                  // 否则兜底 push（如从 profiles 直达非空 startPath 的边界场景）。
+                  if (backstack.getOrNull(backstack.size - 2) == parentScreen) {
+                    backstack.removeLastOrNull()
+                  } else {
+                    backstack.add(parentScreen)
+                  }
                 }.padding(20.dp))
               }
               LazyColumn(state = listState) {
                 items(sortedEntries, key = { it.path }) { entry ->
                   Row(Modifier.fillMaxWidth().clickable {
+                    saveListPosition()
                     if (entry.directory) {
                       backstack.add(SmbBrowserScreen(profileId, entry.path, subtitlePicker, shareName))
                     } else {
@@ -503,10 +693,20 @@ data class SmbBrowserScreen(
         },
         confirmButton = {
           TextButton(
-            enabled = manualShareName.isNotBlank(),
+            enabled = manualShareName.trim().isNotBlank(),
             onClick = {
+              val enteredShare = manualShareName.trim()
+              runCatching {
+                profile?.let {
+                  profileStore.save(it.copy(share = enteredShare))
+                  runtime.forgetProfile(it.id)
+                }
+              }.onFailure {
+                error = it.message ?: unableAccessText
+                return@TextButton
+              }
               manualShareDialogShown = false
-              backstack.add(SmbBrowserScreen(profileId, path, subtitlePicker, manualShareName.trim()))
+              backstack.add(SmbBrowserScreen(profileId, path, subtitlePicker, enteredShare))
               manualShareName = ""
             },
           ) { Text(openText) }
@@ -522,6 +722,25 @@ data class SmbBrowserScreen(
 }
 
 private val subtitleExtensions = setOf("srt", "ass", "ssa", "vtt", "sub")
+
+private fun LazyListState.toSmbDirectoryScrollPosition(): SmbDirectoryScrollPosition {
+  val index = firstVisibleItemIndex
+  val anchorPath = layoutInfo.visibleItemsInfo
+    .firstOrNull { it.index == index }
+    ?.key
+    ?.toString()
+  return SmbDirectoryScrollPosition(
+    index = index,
+    offsetPx = firstVisibleItemScrollOffset,
+    anchorPath = anchorPath,
+  )
+}
+
+private tailrec fun Context.findViewModelStoreOwner(): ViewModelStoreOwner? = when (this) {
+  is ViewModelStoreOwner -> this
+  is ContextWrapper -> baseContext.findViewModelStoreOwner()
+  else -> null
+}
 
 private val SmbSortOrder.label: Int
   get() = when (this) {

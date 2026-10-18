@@ -32,12 +32,7 @@ class SmbProfileStore(
   fun getProfiles(): List<SmbProfile> {
     val value = preferences.getString(KEY, null) ?: return emptyList()
     return try {
-      val storedProfiles = json.decodeFromString(ListSerializer(SmbProfile.serializer()), decrypt(value))
-      val profiles = storedProfiles.map { it.withoutShare() }
-      // Older versions persisted the selected share. Rewrite those records once so the
-      // obsolete value is discarded instead of being carried into a new connection.
-      if (profiles != storedProfiles) write(profiles)
-      profiles
+      json.decodeFromString(ListSerializer(SmbProfile.serializer()), decrypt(value))
     } catch (error: Exception) {
       throw SmbProfileStoreException(
         "Saved SMB settings cannot be decrypted. Existing data was preserved.",
@@ -49,9 +44,8 @@ class SmbProfileStore(
   @Synchronized
   fun save(profile: SmbProfile) {
     val profiles = getProfiles().toMutableList()
-    val profileWithoutShare = profile.withoutShare()
-    val index = profiles.indexOfFirst { it.id == profileWithoutShare.id }
-    if (index >= 0) profiles[index] = profileWithoutShare else profiles += profileWithoutShare
+    val index = profiles.indexOfFirst { it.id == profile.id }
+    if (index >= 0) profiles[index] = profile else profiles += profile
     write(profiles)
   }
 
@@ -63,12 +57,10 @@ class SmbProfileStore(
   private fun write(profiles: List<SmbProfile>) {
     val plain = json.encodeToString(
       ListSerializer(SmbProfile.serializer()),
-      profiles.map { it.withoutShare() },
+      profiles,
     )
     preferences.edit { putString(KEY, encrypt(plain)) }
   }
-
-  private fun SmbProfile.withoutShare(): SmbProfile = if (share.isEmpty()) this else copy(share = "")
 
   private fun secretKey(): SecretKey {
     val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }

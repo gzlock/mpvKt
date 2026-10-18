@@ -1,6 +1,7 @@
 package live.mehiz.mpvkt.ui.preferences
 
 // Modified in the gzlock/mpvKt fork to expose project attribution and licenses.
+import android.content.ClipData
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -25,13 +26,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +43,7 @@ import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import compose.icons.SimpleIcons
 import compose.icons.simpleicons.Github
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.BuildConfig
 import live.mehiz.mpvkt.R
@@ -57,7 +60,8 @@ object AboutScreen : Screen {
   @Composable
   override fun Content() {
     val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     val backstack = LocalBackStack.current
     Scaffold(
       topBar = {
@@ -112,7 +116,9 @@ object AboutScreen : Screen {
               )
             },
             onClick = {
-              clipboard.setText(AnnotatedString(collectDeviceInfo()))
+              scope.launch {
+                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("text", collectDeviceInfo())))
+              }
             },
           )
           Preference(

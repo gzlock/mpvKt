@@ -11,6 +11,8 @@ import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
@@ -22,29 +24,27 @@ import android.provider.MediaStore
 import android.util.Log
 import android.util.Rational
 import android.view.KeyEvent
-import android.view.View
 import android.view.WindowManager
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.media.AudioAttributesCompat
-import androidx.media.AudioFocusRequestCompat
-import androidx.media.AudioManagerCompat
 import com.github.k1rakishou.fsaf.FileManager
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import `is`.xyz.mpv.Utils
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -95,7 +95,7 @@ class PlayerActivity : AppCompatActivity() {
   private var mediaPlaybackService: MediaPlaybackService? = null
   private var serviceBound = false
 
-  private var audioFocusRequest: AudioFocusRequestCompat? = null
+  private var audioFocusRequest: AudioFocusRequest? = null
   private var restoreAudioFocus: () -> Unit = {}
 
   private var pipRect: android.graphics.Rect? = null
@@ -136,7 +136,13 @@ class PlayerActivity : AppCompatActivity() {
           viewModel = viewModel,
           onBackPress = ::finish,
           modifier = Modifier.onGloballyPositioned {
-            pipRect = it.boundsInWindow().toAndroidRect()
+            val bounds = it.boundsInWindow()
+            pipRect = android.graphics.Rect(
+              bounds.left.roundToInt(),
+              bounds.top.roundToInt(),
+              bounds.right.roundToInt(),
+              bounds.bottom.roundToInt(),
+            )
           },
         )
       }
@@ -150,8 +156,11 @@ class PlayerActivity : AppCompatActivity() {
 
   override fun onDestroy() {
     Log.d(TAG, "Exiting")
-    audioFocusRequest?.let {
-      AudioManagerCompat.abandonAudioFocusRequest(audioManager, it)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+    } else {
+      @Suppress("DEPRECATION") // API 24/25 无 AudioFocusRequest，只能使用监听器式 API
+      audioManager.abandonAudioFocus(audioFocusChangeListener)
     }
     audioFocusRequest = null
     mediaSession?.release()
@@ -226,6 +235,17 @@ class PlayerActivity : AppCompatActivity() {
     }
   }
 
+  private val smbSubtitlePickerLauncher =
+    registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+      if (result.resultCode == RESULT_OK) {
+        result.data?.data?.let(viewModel::addSubtitle)
+      }
+    }
+
+  internal fun launchSmbSubtitlePicker() {
+    smbSubtitlePickerLauncher.launch(createSmbSubtitlePickerIntent())
+  }
+
   override fun onPause() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
       !isInPictureInPictureMode &&
@@ -264,16 +284,17 @@ class PlayerActivity : AppCompatActivity() {
   @SuppressLint("NewApi")
   override fun onUserLeaveHint() {
     if (isPipSupported && viewModel.paused == false && playerPreferences.automaticallyEnterPip.get()) {
-      enterPictureInPictureMode()
+      enterPip()
     }
     super.onUserLeaveHint()
   }
 
   @SuppressLint("NewApi")
+  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION") // onBackPressed 已被 OnBackPressedDispatcher 取代，低版本兼容仍需保留
   override fun onBackPressed() {
     if (isPipSupported && viewModel.paused == false && playerPreferences.automaticallyEnterPip.get()) {
       if (viewModel.sheetShown.value == Sheets.None && viewModel.panelShown.value == Panels.None) {
-        enterPictureInPictureMode()
+        enterPip()
       }
     } else {
       super.onBackPressed()
@@ -288,11 +309,6 @@ class PlayerActivity : AppCompatActivity() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-    binding.root.systemUiVisibility =
-      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-      View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-      View.SYSTEM_UI_FLAG_LOW_PROFILE
     windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
     windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
     windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -336,16 +352,26 @@ class PlayerActivity : AppCompatActivity() {
   private fun setupAudio() {
     audioPreferences.audioChannels.get().let { MPVLib.setPropertyString(it.property, it.value) }
 
-    val request = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN).also {
-      it.setAudioAttributes(
-        AudioAttributesCompat.Builder().setUsage(AudioAttributesCompat.USAGE_MEDIA)
-          .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC).build(),
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+        .setAudioAttributes(
+          AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build(),
+        )
+        .setOnAudioFocusChangeListener(audioFocusChangeListener)
+        .build()
+      if (audioManager.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+        audioFocusRequest = request
+      }
+    } else {
+      @Suppress("DEPRECATION") // API 24/25 无 AudioFocusRequest，只能使用监听器式 API
+      audioManager.requestAudioFocus(
+        audioFocusChangeListener,
+        AudioManager.STREAM_MUSIC,
+        AudioManager.AUDIOFOCUS_GAIN,
       )
-      it.setOnAudioFocusChangeListener(audioFocusChangeListener)
-    }.build()
-    AudioManagerCompat.requestAudioFocus(audioManager, request).let {
-      if (it == AudioManager.AUDIOFOCUS_REQUEST_FAILED) return@let
-      audioFocusRequest = request
     }
   }
 
@@ -507,7 +533,7 @@ class PlayerActivity : AppCompatActivity() {
       Intent.ACTION_VIEW -> intent.data?.resolveUri(this)
       Intent.ACTION_SEND -> {
         if (intent.hasExtra(Intent.EXTRA_STREAM)) {
-          intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!.resolveUri(this)
+          IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)!!.resolveUri(this)
         } else {
           intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
             val uri = it.trim().toUri()
@@ -524,7 +550,7 @@ class PlayerActivity : AppCompatActivity() {
     val uri = if (intent.type == "text/plain") {
       intent.getStringExtra(Intent.EXTRA_TEXT)!!.toUri()
     } else {
-      (intent.data ?: intent.getParcelableExtra(Intent.EXTRA_STREAM))
+      (intent.data ?: IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java))
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && uri != null) {
       val cursor = contentResolver.query(uri, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null)
@@ -701,10 +727,12 @@ class PlayerActivity : AppCompatActivity() {
     configurePlaylist(intent)?.let { MPVLib.command("loadfile", it, "replace") }
   }
 
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-    if (requestCode == SMB_SUBTITLE_REQUEST && resultCode == RESULT_OK) {
-      data?.data?.let(viewModel::addSubtitle)
+  @Suppress("DEPRECATION") // API 24/25 仅有无参版本；O 及以上使用带 PictureInPictureParams 的版本
+  internal fun enterPip() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      enterPictureInPictureMode(createPipParams())
+    } else {
+      enterPictureInPictureMode()
     }
   }
 
@@ -923,7 +951,6 @@ class PlayerActivity : AppCompatActivity() {
   }
 
   companion object {
-    const val SMB_SUBTITLE_REQUEST = 4172
     // action of result intent
     private const val RESULT_INTENT = "live.mehiz.mpvkt.ui.player.PlayerActivity.result"
   }

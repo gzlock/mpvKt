@@ -12,3 +12,7 @@ local.properties
 __pycache__/
 .run
 .tmp-aar
+.env
+/dist
+/*.jks
+*.logcat

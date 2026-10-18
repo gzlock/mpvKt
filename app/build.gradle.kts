@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
   alias(libs.plugins.ksp)
   alias(libs.plugins.android.application)
-  alias(libs.plugins.jetbrains.kotlin.android)
   alias(libs.plugins.kotlin.compose.compiler)
   alias(libs.plugins.room)
   alias(libs.plugins.detekt) apply false
@@ -191,7 +190,6 @@ pluginManager.withPlugin("io.gitlab.arturbosch.detekt") {
 kotlin {
   compilerOptions {
     jvmTarget.set(JvmTarget.JVM_17)
-    freeCompilerArgs.addAll("-Xwhen-guards", "-Xcontext-parameters")
   }
 }
 

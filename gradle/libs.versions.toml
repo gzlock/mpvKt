@@ -6,7 +6,7 @@ activityCompose = "1.13.0"
 koin = "4.2.2"
 room = "2.8.5"
 detekt = "1.23.8"
-about-libs = "15.2.0"
+about-libs = "15.3.0"
 navigation3 = "1.2.0"
 kotlinx-serialization = "1.11.0"
 junit = "4.13.2"
@@ -71,9 +71,8 @@ about-libs = ["about-libs-core", "about-libs-ui-m3"]
 compose-navigation3 = ["androidx-navigation3-runtime", "androidx-navigation3-ui"]
 
 [plugins]
-ksp = { id = "com.google.devtools.ksp", version = "2.3.6" }
+ksp = { id = "com.google.devtools.ksp", version = "2.3.12" }
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 room = { id = "androidx.room", version.ref = "room" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

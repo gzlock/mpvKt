@@ -28,7 +28,9 @@ import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.preferences.GesturePreferences
 import org.koin.android.ext.android.inject
 
-@Suppress("TooManyFunctions")
+// androidx.media (MediaBrowserServiceCompat/MediaSessionCompat 等) 自 1.7.0 起标记弃用，
+// 官方迁移路径为 androidx.media3.session（MediaSessionService）；迁移前暂时抑制 DEPRECATION。
+@Suppress("TooManyFunctions", "DEPRECATION")
 class MediaPlaybackService : MediaBrowserServiceCompat(), MPVLib.EventObserver {
   companion object {
     private const val NOTIFICATION_ID = 69420

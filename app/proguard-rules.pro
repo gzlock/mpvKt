@@ -26,3 +26,6 @@
 # on Android. The app uses password/anonymous SMB authentication, not SPNEGO.
 -dontwarn javax.el.**
 -dontwarn org.ietf.jgss.**
+
+-keep class is.xyz.mpv.MPV { *; }
+-keep class is.xyz.mpv.BaseMPVView { *; }

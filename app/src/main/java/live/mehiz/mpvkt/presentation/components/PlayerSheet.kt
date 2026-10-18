@@ -4,12 +4,14 @@ import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -80,16 +82,12 @@ fun PlayerSheet(
     label = "alpha"
   )
 
-  val decayAnimationSpec = rememberSplineBasedDecay<Float>()
-  val anchoredDraggableState = remember {
-    AnchoredDraggableState(
-      initialValue = 1,
-      snapAnimationSpec = sheetAnimationSpec,
-      decayAnimationSpec = decayAnimationSpec,
-      positionalThreshold = { with(density) { 56.dp.toPx() } },
-      velocityThreshold = { with(density) { 125.dp.toPx() } },
-    )
-  }
+  val anchoredDraggableState = remember { AnchoredDraggableState(initialValue = 1) }
+  val flingBehavior = AnchoredDraggableDefaults.flingBehavior(
+    state = anchoredDraggableState,
+    positionalThreshold = { with(density) { 56.dp.toPx() } },
+    animationSpec = sheetAnimationSpec,
+  )
   val internalOnDismissRequest = {
     if (anchoredDraggableState.currentValue == 0) {
       scope.launch {
@@ -125,8 +123,8 @@ fun PlayerSheet(
           onClick = {},
         )
         .nestedScroll(
-          remember(anchoredDraggableState) {
-            anchoredDraggableState.preUpPostDownNestedScrollConnection()
+          remember(anchoredDraggableState, flingBehavior) {
+            anchoredDraggableState.preUpPostDownNestedScrollConnection(flingBehavior)
           },
         )
         .then(modifier)
@@ -142,6 +140,7 @@ fun PlayerSheet(
         .anchoredDraggable(
           state = anchoredDraggableState,
           orientation = Orientation.Vertical,
+          flingBehavior = flingBehavior,
         )
         .windowInsetsPadding(
           WindowInsets.systemBars
@@ -172,7 +171,9 @@ fun PlayerSheet(
   }
 }
 
-private fun <T> AnchoredDraggableState<T>.preUpPostDownNestedScrollConnection() = object : NestedScrollConnection {
+private fun <T> AnchoredDraggableState<T>.preUpPostDownNestedScrollConnection(
+  flingBehavior: FlingBehavior,
+) = object : NestedScrollConnection {
   override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
     val delta = available.toFloat()
     return if (delta < 0 && source == NestedScrollSource.UserInput) {
@@ -197,7 +198,7 @@ private fun <T> AnchoredDraggableState<T>.preUpPostDownNestedScrollConnection() 
   override suspend fun onPreFling(available: Velocity): Velocity {
     val toFling = available.toFloat()
     return if (toFling < 0 && offset > anchors.minPosition()) {
-      settle(toFling)
+      performFling(flingBehavior, toFling)
       available
     } else {
       Velocity.Zero
@@ -207,7 +208,7 @@ private fun <T> AnchoredDraggableState<T>.preUpPostDownNestedScrollConnection() 
   override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
     val toFling = available.toFloat()
     return if (toFling > 0) {
-      settle(toFling)
+      performFling(flingBehavior, toFling)
       available
     } else {
       Velocity.Zero
@@ -220,4 +221,19 @@ private fun <T> AnchoredDraggableState<T>.preUpPostDownNestedScrollConnection() 
   private fun Velocity.toFloat() = y
 
   private fun Offset.toFloat(): Float = y
+}
+
+private suspend fun <T> AnchoredDraggableState<T>.performFling(
+  flingBehavior: FlingBehavior,
+  velocity: Float,
+) {
+  anchoredDrag {
+    val scrollScope = object : ScrollScope {
+      override fun scrollBy(pixels: Float): Float {
+        dragTo(this@performFling.offset + pixels)
+        return pixels
+      }
+    }
+    with(flingBehavior) { scrollScope.performFling(velocity) }
+  }
 }

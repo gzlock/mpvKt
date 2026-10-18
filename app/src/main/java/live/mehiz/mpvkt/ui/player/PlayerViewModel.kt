@@ -2,10 +2,11 @@ package live.mehiz.mpvkt.ui.player
 
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.graphics.Point
 import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
-import android.util.DisplayMetrics
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.net.toUri
@@ -38,6 +39,7 @@ import kotlin.reflect.KProperty
 class PlayerViewModelProviderFactory(
   private val activity: PlayerActivity,
 ) : ViewModelProvider.Factory {
+  @Suppress("UNCHECKED_CAST") // 该 Factory 仅用于创建 PlayerViewModel
   override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
     return PlayerViewModel(activity) as T
   }
@@ -293,9 +295,15 @@ class PlayerViewModel(
       }
 
       VideoAspect.Stretch -> {
-        val dm = DisplayMetrics()
-        activity.windowManager.defaultDisplay.getRealMetrics(dm)
-        ratio = dm.widthPixels / dm.heightPixels.toDouble()
+        val size = Point()
+        val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+          activity.display
+        } else {
+          @Suppress("DEPRECATION") // API 30 以下没有 Context.getDisplay()
+          activity.windowManager.defaultDisplay
+        }
+        display?.getRealSize(size)
+        ratio = if (size.y > 0) size.x / size.y.toDouble() else ratio
         pan = 0.0
       }
     }
@@ -380,10 +388,12 @@ class PlayerViewModel(
 
   private val inputMethodManager = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
   private fun forceShowSoftwareKeyboard() {
+    @Suppress("DEPRECATION") // toggleSoftInput/SHOW_FORCED 自 API 33 弃用；保留强制显示语义，低版本仍需使用
     inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
   }
 
   private fun forceHideSoftwareKeyboard() {
+    @Suppress("DEPRECATION") // toggleSoftInput 自 API 33 弃用；隐藏逻辑兼容低版本
     inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0)
   }
 
