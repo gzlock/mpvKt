@@ -2,6 +2,7 @@ package live.mehiz.mpvkt.network.smb
 
 import android.util.Log
 import live.mehiz.mpvkt.ui.player.videoExtensions
+import live.mehiz.mpvkt.ui.utils.NaturalSort
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 
@@ -58,10 +59,10 @@ class SmbRuntime(
   ): List<SmbPlaybackItem> {
     val directory = path.substringBeforeLast('/', "")
     val comparator = when (sortOrder) {
-      SmbSortOrder.NAME_ASC -> compareBy<SmbEntry> { it.name.lowercase() }.thenBy { it.name }
-      SmbSortOrder.NAME_DESC -> compareByDescending<SmbEntry> { it.name.lowercase() }.thenByDescending { it.name }
-      SmbSortOrder.MODIFIED_ASC -> compareBy<SmbEntry> { it.modifiedTime }.thenBy { it.name.lowercase() }
-      SmbSortOrder.MODIFIED_DESC -> compareByDescending<SmbEntry> { it.modifiedTime }.thenBy { it.name.lowercase() }
+      SmbSortOrder.NAME_ASC -> Comparator<SmbEntry> { left, right -> NaturalSort.compare(left.name, right.name) }
+      SmbSortOrder.NAME_DESC -> Comparator<SmbEntry> { left, right -> NaturalSort.compare(right.name, left.name) }
+      SmbSortOrder.MODIFIED_ASC -> compareBy<SmbEntry> { it.modifiedTime }.thenBy(NaturalSort.comparator) { it.name }
+      SmbSortOrder.MODIFIED_DESC -> compareByDescending<SmbEntry> { it.modifiedTime }.thenByDescending(NaturalSort.comparator) { it.name }
     }
     return list(profile, directory)
       .asSequence()

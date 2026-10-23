@@ -60,6 +60,7 @@ import live.mehiz.mpvkt.network.smb.SmbRuntime
 import live.mehiz.mpvkt.ui.player.PlaylistItem
 import live.mehiz.mpvkt.ui.player.controls.PlayerControls
 import live.mehiz.mpvkt.ui.theme.MpvKtTheme
+import live.mehiz.mpvkt.ui.utils.NaturalSort
 import org.koin.android.ext.android.inject
 import java.io.File
 
@@ -211,7 +212,7 @@ class PlayerActivity : AppCompatActivity() {
     val parent = file.parentFile ?: return
     val files = parent.listFiles()?.asSequence()
       ?.filter { it.isFile && videoExtensions.contains(it.extension.lowercase()) }
-      ?.sortedWith(compareBy<File> { it.name.lowercase() }.thenBy { it.name })
+      ?.sortedWith(Comparator<File> { left, right -> NaturalSort.compare(left.name, right.name) })
       ?.toList().orEmpty()
     if (files.isEmpty()) return
     playlistUrls = files.map { it.absolutePath }

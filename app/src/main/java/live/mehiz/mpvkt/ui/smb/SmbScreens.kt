@@ -81,6 +81,7 @@ import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.ui.player.PlayerActivity
 import live.mehiz.mpvkt.ui.player.videoExtensions
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
+import live.mehiz.mpvkt.ui.utils.NaturalSort
 import org.koin.compose.koinInject
 
 @Serializable
@@ -530,10 +531,10 @@ data class SmbBrowserScreen(
     }
     val sortedEntries = remember(entries, sortOrder) {
       val itemComparator = when (sortOrder) {
-        SmbSortOrder.NAME_ASC -> compareBy<SmbEntry> { it.name.lowercase() }.thenBy { it.name }
-        SmbSortOrder.NAME_DESC -> compareByDescending<SmbEntry> { it.name.lowercase() }.thenByDescending { it.name }
-        SmbSortOrder.MODIFIED_ASC -> compareBy<SmbEntry> { it.modifiedTime }.thenBy { it.name.lowercase() }
-        SmbSortOrder.MODIFIED_DESC -> compareByDescending<SmbEntry> { it.modifiedTime }.thenBy { it.name.lowercase() }
+        SmbSortOrder.NAME_ASC -> Comparator<SmbEntry> { left, right -> NaturalSort.compare(left.name, right.name) }
+        SmbSortOrder.NAME_DESC -> Comparator<SmbEntry> { left, right -> NaturalSort.compare(right.name, left.name) }
+        SmbSortOrder.MODIFIED_ASC -> compareBy<SmbEntry> { it.modifiedTime }.thenBy(NaturalSort.comparator) { it.name }
+        SmbSortOrder.MODIFIED_DESC -> compareByDescending<SmbEntry> { it.modifiedTime }.thenByDescending(NaturalSort.comparator) { it.name }
       }
       entries.sortedWith(Comparator { left, right ->
         val directoryOrder = (!left.directory).compareTo(!right.directory)
