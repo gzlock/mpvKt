@@ -11,6 +11,22 @@ This repository is a derivative work based on the original [mpvKt project](https
 - Sleep timer, Speed presets
 - Smoother PiP
 
+### v0.1.11
+- Natural sorting for file and folder names in the player and SMB browser
+- Enhanced SMB directory sorting
+
+### v0.1.10
+- Renamed the app to "mpvKt Next"
+- Enhanced SMB authentication with progress reporting and MD4/NTLM support
+- Improved SMB authentication error handling
+- Refactored the SMB profile editing screen with better state management
+- Scroll position restoration when browsing SMB directories
+- Enhanced ProGuard rules
+
+### v0.1.9
+- Refactored PlayerViewModel and removed custom button functionality
+- Added project attribution and license information (About screen, NOTICE)
+
 ### v0.1.8
 - Upgrade mpv-lib from 0.1.9 to 0.1.12
 
