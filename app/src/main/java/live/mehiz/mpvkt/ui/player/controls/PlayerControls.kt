@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -786,7 +787,11 @@ private fun PlaylistDrawer(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       } else {
-        LazyColumn {
+        val listState = rememberLazyListState()
+        LaunchedEffect(Unit) {
+          listState.scrollToItem(currentPosition.coerceIn(0, items.lastIndex))
+        }
+        LazyColumn(state = listState) {
           itemsIndexed(items, key = { index, item -> "${index}_${item.source}" }) { index, item ->
             Text(
               text = item.title,
