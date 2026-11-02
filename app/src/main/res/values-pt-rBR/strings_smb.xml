@@ -38,6 +38,7 @@
     <string name="smb_share_name_hint">Nome do compartilhamento</string>
     <string name="smb_open_share">Abrir</string>
     <string name="smb_parent_directory">Diretório pai</string>
+    <string name="smb_native_ad_badge">Anúncio</string>
     <string name="pref_player_repeat_playlist">Repetir lista de reprodução</string>
     <string name="player_sheets_add_smb_sub">Adicionar legenda SMB</string>
     <string name="player_playlist_title">Lista de reprodução</string>

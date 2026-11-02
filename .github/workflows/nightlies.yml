@@ -30,6 +30,9 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID: ${{ secrets.ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID }}
         run: ./gradlew assemblePreview
 
       - name: Sign apk

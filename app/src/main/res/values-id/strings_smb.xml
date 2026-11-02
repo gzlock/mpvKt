@@ -38,6 +38,7 @@
     <string name="smb_share_name_hint">Nama berbagi</string>
     <string name="smb_open_share">Buka</string>
     <string name="smb_parent_directory">Direktori induk</string>
+    <string name="smb_native_ad_badge">Iklan</string>
     <string name="pref_player_repeat_playlist">Ulangi daftar putar</string>
     <string name="player_sheets_add_smb_sub">Tambah subtitle SMB</string>
     <string name="player_playlist_title">Daftar putar</string>

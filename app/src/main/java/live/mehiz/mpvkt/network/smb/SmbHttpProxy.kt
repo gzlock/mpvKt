@@ -27,6 +27,11 @@ class SmbHttpProxy : Closeable {
     return "http://127.0.0.1:${server.localPort}/$token"
   }
 
+  /** Removes a published file and closes its remote handle. */
+  fun unpublish(token: String) {
+    files.remove(token)?.let { runCatching { it.close() } }
+  }
+
   private fun handle(socket: Socket) {
     socket.use { client ->
       client.soTimeout = SOCKET_TIMEOUT_MILLIS

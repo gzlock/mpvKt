@@ -52,6 +52,7 @@
     <string name="smb_share_name_hint">Share name</string>
     <string name="smb_open_share">Open</string>
     <string name="smb_parent_directory">Parent directory</string>
+    <string name="smb_native_ad_badge">Ad</string>
 
     <string name="pref_preferences">Preferences</string>
 

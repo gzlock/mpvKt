@@ -120,6 +120,19 @@ class PlayerViewModel(
     closePlaylist()
   }
 
+  val loopFile = MPVLib.propString["loop-file"]
+
+  fun toggleLoopMode() {
+    val isLoopingCurrentFile = loopFile.value == "inf" || loopFile.value == "yes"
+    if (isLoopingCurrentFile) {
+      MPVLib.setPropertyString("loop-file", "no")
+      MPVLib.setPropertyString("loop-playlist", "inf")
+    } else {
+      MPVLib.setPropertyString("loop-file", "inf")
+      MPVLib.setPropertyString("loop-playlist", "no")
+    }
+  }
+
   // Pair(startingPosition, seekAmount)
   val gestureSeekAmount = MutableStateFlow<Pair<Int, Int>?>(null)
 

@@ -38,6 +38,7 @@
     <string name="smb_share_name_hint">Имя ресурса</string>
     <string name="smb_open_share">Открыть</string>
     <string name="smb_parent_directory">Родительский каталог</string>
+    <string name="smb_native_ad_badge">Реклама</string>
     <string name="pref_player_repeat_playlist">Повторять список воспроизведения</string>
     <string name="player_sheets_add_smb_sub">Добавить субтитры SMB</string>
     <string name="player_playlist_title">Список воспроизведения</string>

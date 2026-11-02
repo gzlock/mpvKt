@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,7 +34,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -44,12 +44,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,6 +84,11 @@ import live.mehiz.mpvkt.network.smb.SmbSortOrder
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.ui.player.PlayerActivity
 import live.mehiz.mpvkt.ui.player.videoExtensions
+import live.mehiz.mpvkt.ui.smb.ads.SmbAdPageKey
+import live.mehiz.mpvkt.ui.smb.ads.SmbAdSlotKey
+import live.mehiz.mpvkt.ui.smb.ads.SmbNativeAdSlot
+import live.mehiz.mpvkt.ui.smb.ads.SmbNativeAdViewModel
+import live.mehiz.mpvkt.ui.smb.thumbnail.SmbVideoThumbnail
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
 import live.mehiz.mpvkt.ui.utils.NaturalSort
 import org.koin.compose.koinInject
@@ -132,16 +141,18 @@ data class SmbProfilesScreen(
         TopAppBar(
           title = { Text(stringResource(R.string.smb_profiles_title)) },
           navigationIcon = {
-            IconButton(onClick = {
-              if (subtitlePicker) {
-                (context as? Activity)?.apply {
-                  setResult(Activity.RESULT_CANCELED)
-                  finish()
+            IconButton(
+              onClick = {
+                if (subtitlePicker) {
+                  (context as? Activity)?.apply {
+                    setResult(Activity.RESULT_CANCELED)
+                    finish()
+                  }
+                } else {
+                  backstack.removeLastOrNull()
                 }
-              } else {
-                backstack.removeLastOrNull()
-              }
-            }) {
+              },
+            ) {
               Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
             }
           },
@@ -153,29 +164,34 @@ data class SmbProfilesScreen(
         )
       },
     ) { padding ->
-      Column(Modifier.fillMaxSize().padding(padding)) {
+      Column(Modifier
+        .fillMaxSize()
+        .padding(padding)) {
         if (profiles.isEmpty()) {
           Text(stringResource(R.string.smb_no_profiles), Modifier.padding(24.dp))
         } else {
           LazyColumn(Modifier.fillMaxWidth()) {
             items(profiles, key = { it.id }) { profile ->
               Row(
-                Modifier.fillMaxWidth().clickable {
-                  // A manually entered share is persisted after the browser is opened. Read
-                  // the latest profile here because this screen may remain in the back stack
-                  // while the browser updates the stored value.
-                  val latestProfile = runCatching {
-                    store.getProfiles().firstOrNull { it.id == profile.id }
-                  }.getOrNull() ?: profile
-                  backstack.add(
-                    SmbBrowserScreen(
-                      profileId = latestProfile.id,
-                      path = latestProfile.startPath,
-                      subtitlePicker = subtitlePicker,
-                      shareName = latestProfile.share.takeIf { it.isNotBlank() },
-                    ),
-                  )
-                }.padding(horizontal = 20.dp, vertical = 14.dp),
+                Modifier
+                  .fillMaxWidth()
+                  .clickable {
+                    // A manually entered share is persisted after the browser is opened. Read
+                    // the latest profile here because this screen may remain in the back stack
+                    // while the browser updates the stored value.
+                    val latestProfile = runCatching {
+                      store.getProfiles().firstOrNull { it.id == profile.id }
+                    }.getOrNull() ?: profile
+                    backstack.add(
+                      SmbBrowserScreen(
+                        profileId = latestProfile.id,
+                        path = latestProfile.startPath,
+                        subtitlePicker = subtitlePicker,
+                        shareName = latestProfile.share.takeIf { it.isNotBlank() },
+                      ),
+                    )
+                  }
+                  .padding(horizontal = 20.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
               ) {
@@ -187,13 +203,15 @@ data class SmbProfilesScreen(
                 IconButton(onClick = { backstack.add(SmbProfileEditorScreen(profile.id)) }) {
                   Icon(Icons.Default.Edit, stringResource(R.string.smb_edit_profile))
                 }
-                IconButton(onClick = {
-                  runCatching {
-                    store.delete(profile.id)
-                    runtime.forgetProfile(profile.id)
-                    store.getProfiles()
-                  }.onSuccess { profiles = it }.onFailure { message = it.message }
-                }) {
+                IconButton(
+                  onClick = {
+                    runCatching {
+                      store.delete(profile.id)
+                      runtime.forgetProfile(profile.id)
+                      store.getProfiles()
+                    }.onSuccess { profiles = it }.onFailure { message = it.message }
+                  },
+                ) {
                   Icon(Icons.Default.Delete, stringResource(R.string.smb_delete_profile))
                 }
               }
@@ -364,7 +382,9 @@ private fun SmbProfileEditor(
         status?.let {
           Text(
             text = it,
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(top = 4.dp),
             color = MaterialTheme.colorScheme.error,
           )
         }
@@ -457,6 +477,19 @@ data class SmbBrowserScreen(
         ?: error("SMB browser must be hosted by a ViewModelStoreOwner")
       ViewModelProvider(owner)[SmbBrowserViewModel::class.java]
     }
+    // 字幕选择器打开的是“SMB 字幕文件列表”，不允许出现广告
+    val listMode = SmbBrowserListMode.of(subtitlePicker)
+    // 字幕列表模式下根本不创建广告 ViewModel，从源头杜绝广告请求
+    val adViewModel = remember(context, listMode) {
+      if (listMode.allowsNativeAds) {
+        val owner = context.findViewModelStoreOwner()
+          ?: error("SMB browser must be hosted by a ViewModelStoreOwner")
+        ViewModelProvider(owner)[SmbNativeAdViewModel::class.java]
+      } else {
+        null
+      }
+    }
+    val adPageKey = remember(profileId, shareName, path) { toAdPageKey() }
     val profile = runtime.profiles().firstOrNull { it.id == profileId }
     val selectingShare = shareName.isNullOrBlank()
     var shares by remember(profileId) { mutableStateOf<List<String>>(emptyList()) }
@@ -464,6 +497,8 @@ data class SmbBrowserScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
     var retryKey by remember { mutableStateOf(0) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
     var manualShareDialogShown by remember { mutableStateOf(false) }
     var manualShareName by remember(profileId, shareName) { mutableStateOf(shareName.orEmpty()) }
     var sortOrder by remember(profileId, shareName, path) {
@@ -503,16 +538,24 @@ data class SmbBrowserScreen(
     LaunchedEffect(sortOrder) {
       listState.scrollToItem(0)
     }
-    LaunchedEffect(profileId, shareName, path, retryKey) {
-      loading = true
-      error = null
-      shares = emptyList()
-      entries = emptyList()
-      if (profile == null) error = profileNotFoundText
-      else if (selectingShare) {
+    // Shared loader used by both the initial/button-retry load and pull-to-refresh.
+    // A refresh keeps the current list visible and only reports failures via snackbar.
+    suspend fun loadContent(isRefresh: Boolean) {
+      if (isRefresh) {
+        isRefreshing = true
+      } else {
+        loading = true
+        error = null
+        shares = emptyList()
+        entries = emptyList()
+      }
+      var failureMessage: String? = null
+      if (profile == null) {
+        failureMessage = profileNotFoundText
+      } else if (selectingShare) {
         runCatching { withContext(Dispatchers.IO) { runtime.browsableShares(profile) } }
           .onSuccess { shares = it }
-          .onFailure { error = it.message ?: unableAccessText }
+          .onFailure { failureMessage = it.message ?: unableAccessText }
       } else {
         val selectedProfile = profile.copy(share = shareName.orEmpty())
         runCatching { withContext(Dispatchers.IO) { runtime.list(selectedProfile, path) } }
@@ -525,9 +568,26 @@ data class SmbBrowserScreen(
               }
               .toList()
           }
-          .onFailure { error = it.message ?: unableAccessText }
+          .onFailure { failureMessage = it.message ?: unableAccessText }
       }
-      loading = false
+      if (isRefresh) {
+        isRefreshing = false
+        if (failureMessage != null) {
+          // Keep the currently visible content (list or error page) and report the
+          // failure transiently instead of replacing the screen.
+          snackbarHostState.showSnackbar(failureMessage)
+        } else {
+          // A successful refresh must clear a previously shown error page.
+          error = null
+        }
+      } else {
+        error = failureMessage
+        loading = false
+      }
+    }
+
+    LaunchedEffect(profileId, shareName, path, retryKey) {
+      loadContent(isRefresh = false)
     }
     val sortedEntries = remember(entries, sortOrder) {
       val itemComparator = when (sortOrder) {
@@ -536,13 +596,37 @@ data class SmbBrowserScreen(
         SmbSortOrder.MODIFIED_ASC -> compareBy<SmbEntry> { it.modifiedTime }.thenBy(NaturalSort.comparator) { it.name }
         SmbSortOrder.MODIFIED_DESC -> compareByDescending<SmbEntry> { it.modifiedTime }.thenByDescending(NaturalSort.comparator) { it.name }
       }
-      entries.sortedWith(Comparator { left, right ->
-        val directoryOrder = (!left.directory).compareTo(!right.directory)
-        if (directoryOrder != 0) directoryOrder else itemComparator.compare(left, right)
-      })
+      entries.sortedWith(
+        Comparator { left, right ->
+          val directoryOrder = (!left.directory).compareTo(!right.directory)
+          if (directoryOrder != 0) directoryOrder else itemComparator.compare(left, right)
+        },
+      )
+    }
+    // 文件 + 广告位的混排数据（字幕列表模式下只有文件）
+    val browserItems = remember(sortedEntries, listMode) {
+      buildSmbBrowserListItems(sortedEntries, listMode)
     }
 
-    LaunchedEffect(profileId, shareName, path, retryKey, loading, error, sortedEntries, shares) {
+    if (adViewModel != null) {
+      val adSlotCount = browserItems.count { it is SmbBrowserListItem.NativeAdSlot }
+      // 列表刷新后变短：销毁已不存在的广告位上的广告。
+      // 加载中或出错时列表是空的，不能据此清理，否则从子目录返回时缓存的广告会被误删。
+      LaunchedEffect(adViewModel, adPageKey, adSlotCount, loading, error) {
+        if (!loading && error == null) adViewModel.trimPage(adPageKey, adSlotCount)
+      }
+      // 页面退出：销毁已不在返回栈中的目录页的广告（含本页）。
+      // 被子目录覆盖或屏幕旋转时本页仍在返回栈中，保留缓存以便恢复时复用；
+      // Activity 结束时由 SmbNativeAdViewModel.onCleared 统一销毁。
+      DisposableEffect(adViewModel, adPageKey) {
+        onDispose {
+          val alivePages = backstack.filterIsInstance<SmbBrowserScreen>().mapTo(HashSet()) { it.toAdPageKey() }
+          adViewModel.retainPages(alivePages)
+        }
+      }
+    }
+
+    LaunchedEffect(profileId, shareName, path, retryKey, loading, error, browserItems, shares) {
       if (loading || error != null) return@LaunchedEffect
 
       // The list is composed with the newly loaded entries before applying the saved position.
@@ -555,23 +639,30 @@ data class SmbBrowserScreen(
       ) ?: SmbDirectoryScrollPosition(index = 0, offsetPx = 0)
 
       // Both the share list and the directory list restore their own saved position.
-      val restoreItems = if (selectingShare) shares else sortedEntries
+      // 目录列表必须按混排后的 browserItems 计算索引：广告位同样占用 LazyColumn 的 index。
+      val restoreItems = if (selectingShare) shares else browserItems
       if (restoreItems.isNotEmpty()) {
         val anchorIndex = savedPosition.anchorPath
           ?.let { anchor ->
             if (selectingShare) shares.indexOf(anchor).takeIf { it >= 0 }
-            else sortedEntries.indexOfFirst { it.path == anchor }.takeIf { it >= 0 }
+            else browserItems.indexOfFirst { it.key == anchor }.takeIf { it >= 0 }
           }
-          ?: savedPosition.index
 
         listState.scrollToItem(
-          index = anchorIndex.coerceIn(0, restoreItems.lastIndex),
-          scrollOffset = savedPosition.offsetPx.coerceAtLeast(0),
+          index = (anchorIndex ?: savedPosition.index).coerceIn(0, restoreItems.lastIndex),
+          // 命中文件锚点时保留原偏移：锚点前有部分可见的广告时它是负数，LazyList 会补齐锚点之前的内容，
+          // 因此无论广告是否仍在缓存中，锚点文件都会回到原来的位置；仅按索引恢复时保持非负
+          scrollOffset = if (anchorIndex != null) {
+            savedPosition.offsetPx
+          } else {
+            savedPosition.offsetPx.coerceAtLeast(0)
+          },
         )
       }
     }
 
     Scaffold(
+      snackbarHost = { SnackbarHost(snackbarHostState) },
       topBar = {
         TopAppBar(
           title = {
@@ -582,10 +673,12 @@ data class SmbBrowserScreen(
             )
           },
           navigationIcon = {
-            IconButton(onClick = {
-              saveListPosition()
-              backstack.removeLastOrNull()
-            }) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, null) }
+            IconButton(
+              onClick = {
+                saveListPosition()
+                backstack.removeLastOrNull()
+              },
+            ) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, null) }
           },
           actions = {
             if (!selectingShare) {
@@ -633,91 +726,160 @@ data class SmbBrowserScreen(
         )
       },
     ) { padding ->
-      Column(Modifier.fillMaxSize().padding(padding)) {
-        if (loading) CircularProgressIndicator(Modifier.padding(24.dp))
-        if (!loading) {
-          when {
-            // Show the real enumeration/authentication error first; the server may deny
-            // share listing, but a manually entered share can still be usable.
-            error != null -> {
-              Text(error!!, Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
-              Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
-                TextButton(onClick = { retryKey++ }) { Text(retryText) }
-                TextButton(onClick = { manualShareDialogShown = true }) { Text(enterShareText) }
-              }
-            }
-            selectingShare && shares.isEmpty() -> {
-              Text(noSharesText, Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
-              Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
-                TextButton(onClick = { retryKey++ }) { Text(retryText) }
-                TextButton(onClick = { manualShareDialogShown = true }) { Text(enterShareText) }
-              }
-            }
-            selectingShare -> {
-              LazyColumn(state = listState) {
-                items(shares, key = { it }) { share ->
-                  Row(
-                    Modifier.fillMaxWidth().clickable {
-                      backstack.add(SmbBrowserScreen(profileId, path, subtitlePicker, share))
-                    }.padding(horizontal = 20.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                  ) {
-                    Icon(Icons.Default.Folder, null)
-                    Text(share)
-                  }
-                }
-                item {
-                  TextButton(
-                    onClick = { manualShareDialogShown = true },
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                  ) { Text(enterShareText) }
+      Column(Modifier
+        .fillMaxSize()
+        .padding(padding)) {
+        if (loading) {
+          CircularProgressIndicator(Modifier.padding(24.dp))
+        }
+        PullToRefreshBox(
+          isRefreshing = isRefreshing,
+          onRefresh = { scope.launch { loadContent(isRefresh = true) } },
+          modifier = Modifier.fillMaxSize(),
+        ) {
+          if (!loading) {
+            when {
+              // Show the real enumeration/authentication error first; the server may deny
+              // share listing, but a manually entered share can still be usable.
+              error != null -> {
+                Text(error!!, Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
+                Row(
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                  modifier = Modifier.padding(horizontal = 16.dp),
+                ) {
+                  TextButton(onClick = { retryKey++ }) { Text(retryText) }
+                  TextButton(onClick = { manualShareDialogShown = true }) { Text(enterShareText) }
                 }
               }
-            }
-            else -> {
-              if (path.isNotBlank()) {
-                Text(stringResource(R.string.smb_parent_directory), Modifier.fillMaxWidth().clickable {
-                  saveListPosition()
-                  val parentPath = path.trim('/').substringBeforeLast('/', "")
-                  val parentScreen = SmbBrowserScreen(profileId, parentPath, subtitlePicker, shareName)
-                  // 返回上级：栈顶下方正好是父目录时 pop（父目录经 ViewModel 恢复滚动位置），
-                  // 否则兜底 push（如从 profiles 直达非空 startPath 的边界场景）。
-                  if (backstack.getOrNull(backstack.size - 2) == parentScreen) {
-                    backstack.removeLastOrNull()
-                  } else {
-                    backstack.add(parentScreen)
-                  }
-                }.padding(20.dp))
+
+              selectingShare && shares.isEmpty() -> {
+                Text(noSharesText, Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
+                Row(
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                  modifier = Modifier.padding(horizontal = 16.dp),
+                ) {
+                  TextButton(onClick = { retryKey++ }) { Text(retryText) }
+                  TextButton(onClick = { manualShareDialogShown = true }) { Text(enterShareText) }
+                }
               }
-              LazyColumn(state = listState) {
-                items(sortedEntries, key = { it.path }) { entry ->
-                  Row(Modifier.fillMaxWidth().clickable {
-                    saveListPosition()
-                    if (entry.directory) {
-                      backstack.add(SmbBrowserScreen(profileId, entry.path, subtitlePicker, shareName))
-                    } else {
-                      scope.launch {
-                        runCatching {
-                          val selectedProfile = profile!!.copy(share = shareName.orEmpty())
-                          if (subtitlePicker) {
-                            val url = withContext(Dispatchers.IO) { runtime.stream(selectedProfile, entry.path) }
-                            (context as? Activity)?.apply {
-                              setResult(Activity.RESULT_OK, Intent().setData(Uri.parse(url)))
-                              finish()
-                            }
+
+              selectingShare -> {
+                LazyColumn(state = listState) {
+                  items(shares, key = { it }) { share ->
+                    Row(
+                      Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                          backstack.add(SmbBrowserScreen(profileId, path, subtitlePicker, share))
+                        }
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                      verticalAlignment = Alignment.CenterVertically,
+                      horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                      Icon(Icons.Default.Folder, null)
+                      Text(share)
+                    }
+                  }
+                  item {
+                    TextButton(
+                      onClick = { manualShareDialogShown = true },
+                      modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    ) { Text(enterShareText) }
+                  }
+                }
+              }
+
+              else -> {
+                Column(Modifier.fillMaxSize()) {
+//                  No need
+//                  if (path.isNotBlank()) {
+//                    Text(
+//                      stringResource(R.string.smb_parent_directory),
+//                      Modifier
+//                        .fillMaxWidth()
+//                        .clickable {
+//                          saveListPosition()
+//                          val parentPath = path.trim('/').substringBeforeLast('/', "")
+//                          val parentScreen = SmbBrowserScreen(profileId, parentPath, subtitlePicker, shareName)
+//                          // 返回上级：栈顶下方正好是父目录时 pop（父目录经 ViewModel 恢复滚动位置），
+//                          // 否则兜底 push（如从 profiles 直达非空 startPath 的边界场景）。
+//                          if (backstack.getOrNull(backstack.size - 2) == parentScreen) {
+//                            backstack.removeLastOrNull()
+//                          } else {
+//                            backstack.add(parentScreen)
+//                          }
+//                        }
+//                        .padding(20.dp),
+//                    )
+//                  }
+                  LazyColumn(state = listState) {
+                    items(
+                      items = browserItems,
+                      key = { it.key },
+                      contentType = { it.contentType },
+                    ) { item ->
+                      when (item) {
+                        is SmbBrowserListItem.FileEntry -> {
+                          val entry = item.entry
+                          val videoProfile = profile?.copy(share = shareName.orEmpty())
+                          val isVideo = videoExtensions.contains(
+                            entry.name.substringAfterLast('.', "").lowercase(),
+                          )
+                          val thumbnailModel = if (videoProfile != null && isVideo) {
+                            SmbVideoThumbnail(
+                              profile = videoProfile,
+                              path = entry.path,
+                              size = entry.size,
+                              modifiedTime = entry.modifiedTime,
+                            )
                           } else {
-                            val items = withContext(Dispatchers.IO) {
-                              runtime.playlist(selectedProfile, entry.path, sortOrder)
-                            }
-                            openSmbPlaylist(context, profileId, shareName.orEmpty(), path, items, entry.path)
+                            null
                           }
-                        }.onFailure { error = it.message ?: unableOpenText }
+                          SmbFileRow(
+                            entry = entry,
+                            thumbnailModel = thumbnailModel,
+                            onClick = {
+                              saveListPosition()
+                              if (entry.directory) {
+                                backstack.add(SmbBrowserScreen(profileId, entry.path, subtitlePicker, shareName))
+                              } else {
+                                scope.launch {
+                                  runCatching {
+                                    val selectedProfile = profile!!.copy(share = shareName.orEmpty())
+                                    if (subtitlePicker) {
+                                      val url = withContext(Dispatchers.IO) {
+                                        runtime.stream(selectedProfile, entry.path)
+                                      }
+                                      (context as? Activity)?.apply {
+                                        setResult(Activity.RESULT_OK, Intent().setData(Uri.parse(url)))
+                                        finish()
+                                      }
+                                    } else {
+                                      val items = withContext(Dispatchers.IO) {
+                                        runtime.playlist(selectedProfile, entry.path, sortOrder)
+                                      }
+                                      openSmbPlaylist(context, profileId, shareName.orEmpty(), path, items, entry.path)
+                                    }
+                                  }.onFailure { error = it.message ?: unableOpenText }
+                                }
+                              }
+                            },
+                          )
+                        }
+
+                        is SmbBrowserListItem.NativeAdSlot -> {
+                          // 只有允许广告的列表才会生成广告位，这里 adViewModel 必然非空
+                          if (adViewModel != null) {
+                            // 凭证与列表项的组合生命周期绑定（RememberObserver），离开组合时自动释放
+                            val slotHandle = remember(adViewModel, adPageKey, item.slotIndex) {
+                              adViewModel.openSlot(SmbAdSlotKey(adPageKey, item.slotIndex))
+                            }
+                            val slotState by slotHandle.state.collectAsState()
+                            SmbNativeAdSlot(state = slotState)
+                          }
+                        }
                       }
                     }
-                  }.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(if (entry.directory) Icons.Default.Folder else Icons.Default.Movie, null)
-                    Text(entry.name, Modifier.padding(start = 12.dp))
                   }
                 }
               }
@@ -770,6 +932,10 @@ data class SmbBrowserScreen(
 
 private val subtitleExtensions = setOf("srt", "ass", "ssa", "vtt", "sub")
 
+/** 目录页对应的广告缓存 key。 */
+private fun SmbBrowserScreen.toAdPageKey(): SmbAdPageKey =
+  SmbAdPageKey.of(profileId, shareName.orEmpty(), path)
+
 /** Steps shown under the button bar while the editor saves a connection. */
 private enum class SmbSaveStep { CONNECT, AUTHENTICATE, SAVE }
 
@@ -788,18 +954,21 @@ private fun SaveStepRow(step: SmbSaveStep, state: SaveStepState) {
           modifier = Modifier.size(16.dp),
           strokeWidth = 2.dp,
         )
+
         SaveStepState.DONE -> Icon(
           Icons.Default.Check,
           contentDescription = null,
           modifier = Modifier.size(16.dp),
           tint = MaterialTheme.colorScheme.primary,
         )
+
         SaveStepState.FAILED -> Icon(
           Icons.Default.Close,
           contentDescription = null,
           modifier = Modifier.size(16.dp),
           tint = MaterialTheme.colorScheme.error,
         )
+
         SaveStepState.PENDING -> Box(
           Modifier
             .size(6.dp)
@@ -829,14 +998,17 @@ private fun SmbSaveStep.label(): String = when (this) {
 
 private fun LazyListState.toSmbDirectoryScrollPosition(): SmbDirectoryScrollPosition {
   val index = firstVisibleItemIndex
-  val anchorPath = layoutInfo.visibleItemsInfo
-    .firstOrNull { it.index == index }
-    ?.key
-    ?.toString()
+  // 以第一个可见的“文件行”为锚点，跳过广告位：广告位高度不固定（未加载/已回收时为 0），
+  // 若以它为锚点，返回时广告已被回收，列表就会整体错位一个广告的高度。
+  val anchorItem = layoutInfo.visibleItemsInfo.firstOrNull {
+    it.index >= index && it.contentType != SmbBrowserListItemType.NATIVE_AD
+  } ?: return SmbDirectoryScrollPosition(index = index, offsetPx = firstVisibleItemScrollOffset)
   return SmbDirectoryScrollPosition(
-    index = index,
-    offsetPx = firstVisibleItemScrollOffset,
-    anchorPath = anchorPath,
+    index = anchorItem.index,
+    // 锚点就是第一个可见项时，等于 firstVisibleItemScrollOffset；
+    // 锚点上方有部分可见的广告时为负数，恢复时 LazyList 会补齐锚点之前的内容
+    offsetPx = -anchorItem.offset,
+    anchorPath = anchorItem.key.toString(),
   )
 }
 

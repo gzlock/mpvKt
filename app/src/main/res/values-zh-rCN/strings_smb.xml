@@ -38,6 +38,7 @@
     <string name="smb_share_name_hint">共享名</string>
     <string name="smb_open_share">打开</string>
     <string name="smb_parent_directory">上级目录</string>
+    <string name="smb_native_ad_badge">广告</string>
     <string name="pref_player_repeat_playlist">重播播放列表</string>
     <string name="player_sheets_add_smb_sub">添加 SMB 字幕</string>
     <string name="player_playlist_title">播放列表</string>

@@ -38,6 +38,7 @@
     <string name="smb_share_name_hint">共有名</string>
     <string name="smb_open_share">開く</string>
     <string name="smb_parent_directory">親ディレクトリ</string>
+    <string name="smb_native_ad_badge">広告</string>
     <string name="pref_player_repeat_playlist">プレイリストをリピート</string>
     <string name="player_sheets_add_smb_sub">SMB 字幕を追加</string>
     <string name="player_playlist_title">プレイリスト</string>

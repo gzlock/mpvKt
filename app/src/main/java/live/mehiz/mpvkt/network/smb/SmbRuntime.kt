@@ -14,6 +14,7 @@ class SmbRuntime(
   private val shareEnumerator = SmbShareEnumerator()
   private val connections = ConcurrentHashMap<ConnectionKey, SmbConnection>()
   @Volatile private var proxy: SmbHttpProxy? = null
+  @Volatile private var thumbnailProxy: SmbHttpProxy? = null
 
   fun profiles(): List<SmbProfile> = profileStore.getProfiles()
 
@@ -79,6 +80,18 @@ class SmbRuntime(
     return playbackProxy().publish(connect(profile).open(path))
   }
 
+  /** Opens a remote file and publishes it through the long-lived thumbnail proxy. */
+  fun publishThumbnail(profile: SmbProfile, path: String): String {
+    val remoteFile = connect(profile).open(path)
+    return thumbnailProxy().publish(remoteFile)
+  }
+
+  /** Releases the remote handle backing a previously published thumbnail URL. */
+  fun unpublishThumbnail(url: String) {
+    val token = url.substringAfterLast('/')
+    thumbnailProxy?.unpublish(token)
+  }
+
   fun forgetProfile(profileId: String) {
     connections.entries
       .filter { it.key.profileId == profileId }
@@ -98,10 +111,18 @@ class SmbRuntime(
 
   override fun close() {
     closePlayback()
+    synchronized(this) {
+      thumbnailProxy?.let { runCatching { it.close() } }
+      thumbnailProxy = null
+    }
   }
 
   @Synchronized
   private fun playbackProxy(): SmbHttpProxy = proxy ?: SmbHttpProxy().also { proxy = it }
+
+  @Synchronized
+  private fun thumbnailProxy(): SmbHttpProxy =
+    thumbnailProxy ?: SmbHttpProxy().also { thumbnailProxy = it }
 
   private data class ConnectionKey(val profileId: String, val share: String)
 

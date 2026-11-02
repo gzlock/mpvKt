@@ -5,6 +5,7 @@ import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.ksp)
@@ -38,6 +39,33 @@ extensions.configure<ApplicationExtension> {
 
     buildConfigField("String", "GIT_SHA", "\"${getCommitSha()}\"")
     buildConfigField("int", "GIT_COUNT", getCommitCount())
+
+    // --- 以下是新增的 AdMob 安全配置逻辑 ---
+
+    // 1. 读取本地 local.properties 文件
+    val localProperties = Properties().apply {
+      val file = rootProject.file("local.properties")
+      if (file.exists()) {
+        load(file.inputStream())
+      }
+    }
+
+    // 2. 处理 AdMob 应用 ID (App ID) -> 注入到 Manifest 占位符
+    val localAppId = localProperties.getProperty("admob_app_id")
+    val admobAppId = localAppId
+      ?: System.getenv("ADMOB_APP_ID")
+      ?: "ca-app-pub-3940256099942544~3347511713" // Google 官方测试 App ID
+    manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
+
+    // 3. 处理 SMB 文件浏览广告单元 ID (Ad Unit ID) -> 注入到 BuildConfig
+    val localAdUnitId = localProperties.getProperty("admob_smb_file_browser_ad_unit_id")
+    val admobAdUnitId = localAdUnitId
+      ?: System.getenv("ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID")
+      ?: "ca-app-pub-3940256099942544/2247696110" // Google 官方测试广告单元 ID
+    buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$admobAdUnitId\"")
+
+    // ------------------------------------
+
   }
   splits {
     abi {
@@ -113,7 +141,7 @@ val copyLicenseAssets = tasks.register<Copy>("copyLicenseAssets") {
   from(rootProject.file("NOTICE"))
   into(licenseAssetsDirectory)
 }
-android.sourceSets["main"].assets.srcDir(licenseAssetsDirectory)
+android.sourceSets["main"].assets.directories.add(licenseAssetsDirectory.absolutePath)
 tasks.named("preBuild").configure { dependsOn(copyLicenseAssets) }
 
 room {
@@ -150,6 +178,7 @@ dependencies {
   implementation(libs.compose.prefs)
   implementation(libs.bundles.about.libs)
   implementation(libs.simple.icons)
+  implementation(libs.coil.compose)
 
   implementation(libs.room.runtime)
   ksp(libs.room.compiler)
@@ -161,6 +190,7 @@ dependencies {
   implementation(libs.fsaf)
   implementation(libs.jcifs)
   implementation(libs.smbj)
+  implementation(libs.gms.play.services.ads)
 }
 
 pluginManager.withPlugin("io.gitlab.arturbosch.detekt") {

@@ -165,6 +165,8 @@ fun PlayerControls(
   val playlist by viewModel.playlist.collectAsState()
   val playlistPosition by viewModel.playlistPosition.collectAsState()
   val playlistShown by viewModel.playlistShown.collectAsState()
+  val loopFile by viewModel.loopFile.collectAsState()
+  val isSingleVideoLoop = loopFile == "inf" || loopFile == "yes"
 
   LaunchedEffect(
     controlsShown,
@@ -559,6 +561,8 @@ fun PlayerControls(
         ) {
           BottomRightPlayerControls(
             isPipAvailable = activity.isPipSupported,
+            isSingleVideoLoop = isSingleVideoLoop,
+            onLoopClick = viewModel::toggleLoopMode,
             onPipClick = {
               activity.enterPip()
             },
@@ -730,6 +734,8 @@ private fun PlayerControlsPreview() {
             )
             BottomRightPlayerControls(
               isPipAvailable = true,
+              isSingleVideoLoop = false,
+              onLoopClick = {},
               onAspectClick = {},
               onPipClick = {},
             )
