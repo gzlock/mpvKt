@@ -875,7 +875,7 @@ data class SmbBrowserScreen(
                               adViewModel.openSlot(SmbAdSlotKey(adPageKey, item.slotIndex))
                             }
                             val slotState by slotHandle.state.collectAsState()
-                            SmbNativeAdSlot(state = slotState)
+                            SmbNativeAdSlot(state = slotState, variant = slotHandle.variant)
                           }
                         }
                       }

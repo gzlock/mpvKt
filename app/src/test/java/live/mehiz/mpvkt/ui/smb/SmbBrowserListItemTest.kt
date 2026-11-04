@@ -36,12 +36,28 @@ class SmbBrowserListItemTest {
   }
 
   @Test
-  fun noAdsWhenListIsNotLongerThanInterval() {
-    listOf(0, 1, 2, 3).forEach { count ->
+  fun shortListGetsOneTailAdAndEmptyOrFullIntervalListDoesNot() {
+    // 空列表：不插入任何广告
+    assertEquals(0, buildSmbBrowserListItems(entries(0), SmbBrowserListMode.FILE_BROWSER, adInterval = 3).size)
+
+    // 文件数不足一个间隔：末尾追加一个广告位
+    listOf(1, 2).forEach { count ->
       val items = buildSmbBrowserListItems(entries(count), SmbBrowserListMode.FILE_BROWSER, adInterval = 3)
-      assertEquals(count, items.size)
-      assertTrue(items.all { it is SmbBrowserListItem.FileEntry })
+      assertEquals(List(count) { "F$it" } + "A0", layout(items))
     }
+
+    // 恰好等于间隔：不触发短列表补位，常规规则下末尾也不插广告
+    val full = buildSmbBrowserListItems(entries(3), SmbBrowserListMode.FILE_BROWSER, adInterval = 3)
+    assertEquals(listOf("F0", "F1", "F2"), layout(full))
+  }
+
+  @Test
+  fun shortListWithDefaultIntervalAppendsAdAfterLastFile() {
+    // 默认间隔 10：不足 10 个文件时，广告位位于列表末尾
+    val items = buildSmbBrowserListItems(entries(7), SmbBrowserListMode.FILE_BROWSER)
+    assertEquals(8, items.size)
+    assertTrue(items.last() is SmbBrowserListItem.NativeAdSlot)
+    assertEquals(0, (items.last() as SmbBrowserListItem.NativeAdSlot).slotIndex)
   }
 
   @Test
@@ -78,14 +94,23 @@ class SmbBrowserListItemTest {
         val items = buildSmbBrowserListItems(source, SmbBrowserListMode.FILE_BROWSER, interval)
         val ads = items.filterIsInstance<SmbBrowserListItem.NativeAdSlot>()
 
-        val expectedAds = if (count == 0) 0 else (count - 1) / interval
+        val expectedAds = when {
+          count == 0 -> 0
+          count < interval -> 1 // 短列表：末尾补一个广告位
+          else -> (count - 1) / interval
+        }
         assertEquals("count=$count interval=$interval", expectedAds, ads.size)
         assertEquals((0 until expectedAds).toList(), ads.map { it.slotIndex })
         assertEquals(source, items.filterIsInstance<SmbBrowserListItem.FileEntry>().map { it.entry })
 
         if (items.isNotEmpty()) {
           assertTrue(items.first() is SmbBrowserListItem.FileEntry)
-          assertTrue(items.last() is SmbBrowserListItem.FileEntry)
+          if (count < interval) {
+            // 短列表：末尾广告位排在最后
+            assertTrue("count=$count interval=$interval", items.last() is SmbBrowserListItem.NativeAdSlot)
+          } else {
+            assertTrue("count=$count interval=$interval", items.last() is SmbBrowserListItem.FileEntry)
+          }
         }
       }
     }

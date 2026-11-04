@@ -67,8 +67,9 @@ sealed interface SmbBrowserListItem {
  *
  * 规则：
  * - 每 [adInterval] 个文件之后插入一个广告位（文件和文件夹都计入，因为它们都是列表里的一行）。
- * - 广告位只出现在两个文件之间：不放在列表开头，也不追加在列表末尾。
- * - 文件数量不超过 [adInterval] 时不插入广告。
+ * - 常规广告位只出现在两个文件之间：不放在列表开头，也不追加在列表末尾。
+ * - 文件数少于 [adInterval] 的非空短列表，常规规则下不会产生任何广告位，
+ *   此时在列表末尾追加一个广告位，保证短列表也有广告曝光。
  * - [mode] 不允许广告（SMB 字幕列表）或 [adInterval] 不是正数时，只返回文件项。
  *
  * 广告位序号按位置递增，所以目录内容不变时广告位的 key 和位置也不变，
@@ -82,12 +83,15 @@ fun buildSmbBrowserListItems(
   if (!mode.allowsNativeAds || adInterval <= 0) {
     return entries.map { SmbBrowserListItem.FileEntry(it) }
   }
-  return buildList<SmbBrowserListItem>(capacity = entries.size + entries.size / adInterval) {
+  return buildList<SmbBrowserListItem>(capacity = entries.size + entries.size / adInterval + 1) {
     var nextSlotIndex = 0
     entries.forEachIndexed { index, entry ->
       add(SmbBrowserListItem.FileEntry(entry))
       val fileCount = index + 1
-      if (fileCount % adInterval == 0 && fileCount < entries.size) {
+      val isIntervalSlot = fileCount % adInterval == 0 && fileCount < entries.size
+      // 短列表（文件数不足一个间隔）：在最后一个文件后补一个广告位
+      val isTailSlot = entries.size < adInterval && fileCount == entries.size
+      if (isIntervalSlot || isTailSlot) {
         add(SmbBrowserListItem.NativeAdSlot(nextSlotIndex++))
       }
     }

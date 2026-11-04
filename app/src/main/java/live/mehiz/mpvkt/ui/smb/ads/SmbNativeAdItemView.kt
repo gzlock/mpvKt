@@ -107,6 +107,7 @@ fun SmbNativeAdItemView(
 @Composable
 fun SmbNativeAdSlot(
   state: SmbNativeAdSlotState,
+  variant: SmbNativeAdVariant,
   modifier: Modifier = Modifier,
 ) {
   val nativeAd = (state as? SmbNativeAdSlotState.Loaded)?.nativeAd
@@ -116,11 +117,52 @@ fun SmbNativeAdSlot(
       .animateContentSize(),
   ) {
     if (nativeAd != null || LocalInspectionMode.current) {
-      SmbNativeAdItemView(
-        nativeAd = nativeAd,
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-      )
+      val itemModifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+      // 确定性分配的变体：小广告渲染仿文件行布局，其余渲染完整大卡片
+      when (variant) {
+        SmbNativeAdVariant.SMALL ->
+          SmbNativeAdSmallItemView(nativeAd = nativeAd, modifier = itemModifier)
+        SmbNativeAdVariant.LARGE ->
+          SmbNativeAdItemView(nativeAd = nativeAd, modifier = itemModifier)
+      }
     }
+  }
+}
+
+/**
+ * SMB 文件列表中的一条“小广告”：高度高仿普通文件行（[SmbFileRow]），
+ * 只展示图标、广告角标、标题与一行说明，不展示 MediaView 大图与 CTA 按钮。
+ *
+ * 与 [SmbNativeAdItemView] 一样，广告本体使用传统 View 构建后通过 [AndroidView] 嵌入 Compose，
+ * 配色和字号取自当前 MaterialTheme；运行时 [nativeAd] 为空不渲染，Preview 模式用 [previewData] 的 Mock 素材渲染。
+ *
+ * 注册到 NativeAdView 的素材只有 icon / headline / body：AdMob 允许只注册部分素材，
+ * 整个 NativeAdView 自身可点击，点击卡片任意区域均视为广告点击。
+ * 本组件不销毁 [nativeAd]（广告由 [SmbNativeAdViewModel] 统一持有），离开组合时只销毁自己创建的 NativeAdView。
+ */
+@Composable
+fun SmbNativeAdSmallItemView(
+  nativeAd: NativeAd?,
+  modifier: Modifier = Modifier,
+  previewData: SmbNativeAdPreviewData = SmbNativeAdPreviewData(),
+) {
+  val isPreview = LocalInspectionMode.current
+  if (isPreview || nativeAd != null) {
+    val style = rememberSmbNativeAdStyle()
+    AndroidView(
+      factory = { context -> SmbNativeAdSmallContainer(context, isPreview) },
+      modifier = modifier.fillMaxWidth(),
+      update = { container ->
+        container.applyStyle(style)
+        if (isPreview) {
+          container.bindPreview(previewData)
+        } else if (nativeAd != null) {
+          container.bind(nativeAd)
+        }
+      },
+      // 离开组合时释放 NativeAdView 的追踪资源；View 不跨 item 复用
+      onRelease = { container -> container.release() },
+    )
   }
 }
 
@@ -416,6 +458,166 @@ private class SmbNativeAdContainer(
   }
 }
 
+/**
+ * 小广告的 View 布局：
+ *
+ * ```
+ * ┌───────────────────────────────────────────────┐
+ * │ [图标]  [广告] 主标题 Headline         (AdChoices)│
+ * │         描述 Body（单行省略）                   │
+ * └───────────────────────────────────────────────┘
+ * ```
+ *
+ * 不创建 MediaView，也不设置 callToActionView：视频/大图类素材不会展示，
+ * 但纯图文广告的曝光与点击统计不受影响。卡片上下内边距 10dp、内容高 40dp，
+ * 配合外层 vertical 6dp 的边距，整体高度与 [SmbFileRow]（约 74dp）基本一致。
+ *
+ * @param isPreview 为 true 时不创建任何 AdMob 类的实例（NativeAdView），改用普通 FrameLayout 占位。
+ */
+@SuppressLint("ViewConstructor")
+private class SmbNativeAdSmallContainer(
+  context: Context,
+  private val isPreview: Boolean,
+) : FrameLayout(context) {
+
+  /** 广告根布局：运行时为 NativeAdView（负责曝光/点击统计和 AdChoices），预览时为普通 FrameLayout。 */
+  private val adRoot: FrameLayout = if (isPreview) FrameLayout(context) else NativeAdView(context)
+  private val card = LinearLayout(context)
+  private val iconView = ImageView(context)
+  private val badgeView = TextView(context)
+  private val headlineView = TextView(context)
+  private val bodyView = TextView(context)
+
+  private var boundAd: NativeAd? = null
+  private var appliedStyle: SmbNativeAdStyle? = null
+
+  init {
+    val mediumTypeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+
+    iconView.apply {
+      scaleType = ImageView.ScaleType.FIT_CENTER
+      outlineProvider = RoundedOutlineProvider(dpToPx(8).toFloat())
+      clipToOutline = true
+    }
+    // “广告”角标：AdMob 政策要求清晰标注，且不小于 15px × 15px
+    badgeView.apply {
+      typeface = mediumTypeface
+      includeFontPadding = false
+      gravity = Gravity.CENTER
+      maxLines = 1
+      setPadding(dpToPx(4), dpToPx(2), dpToPx(4), dpToPx(2))
+    }
+    headlineView.apply {
+      typeface = mediumTypeface
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+    // 说明文本只保留一行，保证整体高度与普通文件行一致；超长时末尾省略
+    bodyView.apply {
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    // ---------- 组装布局 ----------
+    val titleRow = LinearLayout(context).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      addView(badgeView, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
+      addView(
+        headlineView,
+        LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = dpToPx(6) },
+      )
+    }
+    val textColumn = LinearLayout(context).apply {
+      orientation = LinearLayout.VERTICAL
+      addView(titleRow, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+      addView(
+        bodyView,
+        LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dpToPx(4) },
+      )
+    }
+    card.apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      // 右侧 32dp = 常规 12dp 内边距 + AdChoices 预留 20dp，避免 SDK 叠加的图标遮挡标题
+      setPadding(dpToPx(12), dpToPx(10), dpToPx(12 + ADCHOICES_RESERVED_DP), dpToPx(10))
+      addView(
+        iconView,
+        LinearLayout.LayoutParams(dpToPx(40), dpToPx(40)).apply { marginEnd = dpToPx(12) },
+      )
+      addView(textColumn, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+    }
+    adRoot.addView(card, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+    addView(adRoot, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+
+    // ---------- 注册素材 View：小广告只注册 icon / headline / body，必须在 setNativeAd() 之前完成 ----------
+    if (!isPreview) {
+      val nativeAdView = adRoot as NativeAdView
+      nativeAdView.iconView = iconView
+      nativeAdView.headlineView = headlineView
+      nativeAdView.bodyView = bodyView
+    }
+  }
+
+  /** 应用主题配色与字号（只在样式变化时重新设置）。 */
+  fun applyStyle(style: SmbNativeAdStyle) {
+    if (style == appliedStyle) return
+    appliedStyle = style
+
+    card.background = roundedRect(style.containerColor, dpToPx(12)).apply {
+      setStroke(dpToPx(1), style.outlineColor)
+    }
+    badgeView.apply {
+      text = style.badgeText
+      setTextColor(style.badgeContentColor)
+      setTextSize(TypedValue.COMPLEX_UNIT_SP, style.badgeTextSizeSp)
+      background = roundedRect(style.badgeContainerColor, dpToPx(4))
+    }
+    headlineView.apply {
+      setTextColor(style.headlineColor)
+      setTextSize(TypedValue.COMPLEX_UNIT_SP, style.headlineTextSizeSp)
+    }
+    bodyView.apply {
+      setTextColor(style.bodyColor)
+      setTextSize(TypedValue.COMPLEX_UNIT_SP, style.bodyTextSizeSp)
+    }
+    if (isPreview) {
+      iconView.background = roundedRect(style.iconPlaceholderColor, dpToPx(8))
+    }
+  }
+
+  /** 绑定真实广告。同一个广告对象只绑定一次。 */
+  fun bind(nativeAd: NativeAd) {
+    if (nativeAd === boundAd) return
+    boundAd = nativeAd
+
+    // 主标题：AdMob 保证每条原生广告都有 headline
+    headlineView.text = nativeAd.headline.orEmpty()
+    // 描述是可选素材：缺失时隐藏，避免留白
+    bodyView.showOptionalText(nativeAd.body)
+    val icon = nativeAd.icon?.drawable
+    iconView.setImageDrawable(icon)
+    iconView.visibility = if (icon != null) View.VISIBLE else View.GONE
+
+    // 最后一步：把广告对象交给 NativeAdView，SDK 据此注册点击/曝光追踪并渲染 AdChoices
+    (adRoot as NativeAdView).setNativeAd(nativeAd)
+  }
+
+  /** 预览模式：用 Mock 数据填充同一套布局。 */
+  fun bindPreview(data: SmbNativeAdPreviewData) {
+    headlineView.text = data.headline
+    bodyView.showOptionalText(data.body)
+    iconView.setImageResource(R.drawable.ic_launcher_foreground)
+    iconView.visibility = if (data.showIcon) View.VISIBLE else View.GONE
+  }
+
+  /** AndroidView 的 onRelease 中调用：销毁 NativeAdView 自身（NativeAd 由 ViewModel 负责销毁）。 */
+  fun release() {
+    boundAd = null
+    if (!isPreview) (adRoot as NativeAdView).destroy()
+  }
+}
+
 /** 按宽高比确定高度的容器，用于承载 MediaView。 */
 private class AspectRatioFrameLayout(context: Context) : FrameLayout(context) {
   /** 宽 / 高。 */
@@ -568,9 +770,108 @@ private fun PreviewSmbBrowserListWithNativeAds() {
           when (item) {
             is SmbBrowserListItem.FileEntry -> SmbFileRow(entry = item.entry, onClick = {})
             // 预览模式下广告位直接渲染 Mock 广告
-            is SmbBrowserListItem.NativeAdSlot -> SmbNativeAdSlot(state = SmbNativeAdSlotState.Idle)
+            is SmbBrowserListItem.NativeAdSlot ->
+              SmbNativeAdSlot(
+                state = SmbNativeAdSlotState.Idle,
+                variant = resolveSmbNativeAdVariant(item.slotIndex),
+              )
           }
         }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 小广告 Compose Preview
+// ============================================================================
+
+@Preview(name = "小广告 - 浅色", showBackground = true, widthDp = 360)
+@Composable
+private fun PreviewSmbNativeAdSmallItemView() {
+  MaterialTheme {
+    Surface {
+      SmbNativeAdSmallItemView(
+        nativeAd = null,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+      )
+    }
+  }
+}
+
+@Preview(
+  name = "小广告 - 深色",
+  showBackground = true,
+  widthDp = 360,
+  uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL,
+)
+@Composable
+private fun PreviewSmbNativeAdSmallItemViewDark() {
+  MaterialTheme(colorScheme = darkColorScheme()) {
+    Surface {
+      SmbNativeAdSmallItemView(
+        nativeAd = null,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+      )
+    }
+  }
+}
+
+@Preview(name = "小广告 - 缺少可选素材 / 超长标题", showBackground = true, widthDp = 360)
+@Composable
+private fun PreviewSmbNativeAdSmallItemViewMinimal() {
+  MaterialTheme {
+    Surface {
+      SmbNativeAdSmallItemView(
+        nativeAd = null,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+        previewData = SmbNativeAdPreviewData(
+          headline = "一个非常非常长的广告主标题，用来检查单行省略号与 AdChoices 预留空间是否正常",
+          body = null,
+          callToAction = null,
+          showIcon = false,
+        ),
+      )
+    }
+  }
+}
+
+/** 小广告与普通文件行混排：验证小广告高度与文件行基本一致，不出现明显跳动。 */
+@Preview(name = "小广告 / 文件行高度对比", showBackground = true, widthDp = 360, heightDp = 480)
+@Composable
+private fun PreviewSmallAdAlongsideFileRows() {
+  MaterialTheme {
+    Surface {
+      Column {
+        SmbFileRow(
+          entry = SmbEntry(name = "电影", path = "/电影", directory = true),
+          onClick = {},
+        )
+        SmbNativeAdSmallItemView(
+          nativeAd = null,
+          modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+        )
+        SmbFileRow(
+          entry = SmbEntry(
+            name = "第01集.mkv",
+            path = "/第01集.mkv",
+            directory = false,
+            size = 734_003_200L,
+            modifiedTime = 1_735_660_800_000L,
+          ),
+          onClick = {},
+        )
+        SmbNativeAdSmallItemView(
+          nativeAd = null,
+          modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+          previewData = SmbNativeAdPreviewData(
+            headline = "超长标题的小广告，用来验证单行省略时与普通文件行高度仍然保持一致",
+          ),
+        )
+        SmbFileRow(
+          entry = SmbEntry(name = "纪录片", path = "/纪录片", directory = true),
+          onClick = {},
+        )
       }
     }
   }

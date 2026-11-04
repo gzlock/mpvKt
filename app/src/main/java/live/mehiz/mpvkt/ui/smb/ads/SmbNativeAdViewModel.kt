@@ -33,6 +33,37 @@ data class SmbAdSlotKey(
   val slotIndex: Int,
 )
 
+/** 变体分配周期大小：每多少个广告位为一轮。修改这里即可调整大小广告的分配比例。 */
+internal const val SMB_AD_VARIANT_CYCLE_SIZE = 10
+
+/** 每个周期内使用小广告布局的广告位数量；必须小于 [SMB_AD_VARIANT_CYCLE_SIZE]。 */
+internal const val SMB_SMALL_AD_SLOTS_PER_CYCLE = 9
+
+/** 原生广告的布局变体。 */
+enum class SmbNativeAdVariant {
+  /** 小广告：高度高仿普通文件行，只展示图标、广告角标、标题与一行说明。 */
+  SMALL,
+
+  /** 大广告：完整卡片，含 MediaView 大图/视频与 CTA 按钮。 */
+  LARGE,
+}
+
+/**
+ * 确定性分配：按广告位序号在周期内的位置决定布局变体。
+ *
+ * 每 [SMB_AD_VARIANT_CYCLE_SIZE] 个广告位为一个周期，其中前
+ * [SMB_SMALL_AD_SLOTS_PER_CYCLE] 个使用小广告，其余使用大广告
+ * （默认 10 个中 9 小 1 大，即小广告占比 90%）。
+ *
+ * 纯函数：同一 slotIndex 永远得到同一结果，重组、滑回或旋转屏幕都不会让布局变化。
+ */
+internal fun resolveSmbNativeAdVariant(slotIndex: Int): SmbNativeAdVariant =
+  if (slotIndex % SMB_AD_VARIANT_CYCLE_SIZE < SMB_SMALL_AD_SLOTS_PER_CYCLE) {
+    SmbNativeAdVariant.SMALL
+  } else {
+    SmbNativeAdVariant.LARGE
+  }
+
 /** 单个广告位的状态。 */
 @Immutable
 sealed interface SmbNativeAdSlotState {
@@ -63,6 +94,8 @@ sealed interface SmbNativeAdSlotState {
 class SmbNativeAdSlotHandle internal constructor(
   /** 广告位状态，UI 通过 collectAsState() 订阅。 */
   val state: StateFlow<SmbNativeAdSlotState>,
+  /** 该广告位确定使用的布局变体，由广告位序号确定性解析，不随重组变化。 */
+  val variant: SmbNativeAdVariant,
   private val onShown: () -> Unit,
   private val onReleased: () -> Unit,
 ) : RememberObserver {
@@ -124,7 +157,12 @@ class SmbNativeAdViewModel(application: Application) : AndroidViewModel(applicat
    */
   fun openSlot(key: SmbAdSlotKey): SmbNativeAdSlotHandle {
     if (isCleared) {
-      return SmbNativeAdSlotHandle(MutableStateFlow(SmbNativeAdSlotState.Idle), onShown = {}, onReleased = {})
+      return SmbNativeAdSlotHandle(
+        MutableStateFlow(SmbNativeAdSlotState.Idle),
+        variant = resolveSmbNativeAdVariant(key.slotIndex),
+        onShown = {},
+        onReleased = {},
+      )
     }
     val record = slots.getOrPut(key) { SlotRecord(key) }
     val state = record.state.value
@@ -141,6 +179,7 @@ class SmbNativeAdViewModel(application: Application) : AndroidViewModel(applicat
     record.removeWhenReleased = false
     return SmbNativeAdSlotHandle(
       state = record.state.asStateFlow(),
+      variant = record.variant,
       onShown = { onSlotShown(record) },
       onReleased = { releaseSlot(record) },
     )
@@ -281,6 +320,9 @@ class SmbNativeAdViewModel(application: Application) : AndroidViewModel(applicat
 
   private class SlotRecord(val key: SmbAdSlotKey) {
     val state = MutableStateFlow<SmbNativeAdSlotState>(SmbNativeAdSlotState.Idle)
+
+    /** 该广告位的布局变体，记录创建时按序号解析一次后固定。 */
+    val variant: SmbNativeAdVariant = resolveSmbNativeAdVariant(key.slotIndex)
 
     /** 持有该广告位凭证的列表项数量（从组合开始到离开组合），大于 0 时不得销毁其广告。 */
     var holdCount = 0

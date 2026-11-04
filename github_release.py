@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Bump the Android version and publish a GitHub release tag."""
+"""Bump the Android version, publish a GitHub release tag, then run
+build_release.py to build and sign the release artifacts."""
 
 from __future__ import annotations
 
@@ -67,6 +68,25 @@ def tag_exists(tag: str) -> bool:
     return remote.returncode == 0
 
 
+def run_build_release() -> None:
+    """Run build_release.py to build and sign the local release artifacts."""
+
+    build_script = ROOT / "build_release.py"
+    if not build_script.is_file():
+        raise RuntimeError(f"build_release.py was not found: {build_script}")
+
+    print("\nRunning build_release.py to build and sign the release artifacts ...")
+    result = subprocess.run(
+        [sys.executable, str(build_script)],
+        cwd=ROOT,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"build_release.py failed with exit code {result.returncode}"
+        )
+
+
 def main() -> int:
     try:
         current_code, current_name = read_versions()
@@ -115,6 +135,8 @@ def main() -> int:
         run_git("tag", "-a", tag, "-m", f"Release {tag}")
         run_git("push", "origin", tag)
         print(f"Published {tag}. GitHub Actions should now build the release.")
+        run_build_release()
+        print("Local release artifacts were built and signed successfully.")
         return 0
     except (RuntimeError, OSError, ValueError) as error:
         print(f"Error: {error}", file=sys.stderr)

@@ -26,6 +26,31 @@ extensions.configure<ApplicationExtension> {
   compileSdk = 37
   compileSdkMinor = 2
 
+  // 1. 读取本地 local.properties 文件
+  val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+      load(file.inputStream())
+    }
+  }
+
+  // 2. 分别获取 Debug 和 Release 的配置项（带 Fallback 官方测试 ID）
+  val debugAppId = localProperties.getProperty("debug_admob_app_id")
+    ?: System.getenv("DEBUG_ADMOB_APP_ID")
+    ?: "ca-app-pub-3940256099942544~3347511713"
+
+  val releaseAppId = localProperties.getProperty("admob_app_id")
+    ?: System.getenv("ADMOB_APP_ID")
+    ?: "ca-app-pub-3940256099942544~3347511713"
+
+  val debugAdUnitId = localProperties.getProperty("debug_admob_smb_file_browser_ad_unit_id")
+    ?: System.getenv("DEBUG_ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID")
+    ?: "ca-app-pub-3940256099942544/2247696110"
+
+  val releaseAdUnitId = localProperties.getProperty("admob_smb_file_browser_ad_unit_id")
+    ?: System.getenv("ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID")
+    ?: "ca-app-pub-3940256099942544/2247696110"
+
   defaultConfig {
     applicationId = "com.gzlock.mpvkt"
     minSdk = 24
@@ -39,33 +64,6 @@ extensions.configure<ApplicationExtension> {
 
     buildConfigField("String", "GIT_SHA", "\"${getCommitSha()}\"")
     buildConfigField("int", "GIT_COUNT", getCommitCount())
-
-    // --- 以下是新增的 AdMob 安全配置逻辑 ---
-
-    // 1. 读取本地 local.properties 文件
-    val localProperties = Properties().apply {
-      val file = rootProject.file("local.properties")
-      if (file.exists()) {
-        load(file.inputStream())
-      }
-    }
-
-    // 2. 处理 AdMob 应用 ID (App ID) -> 注入到 Manifest 占位符
-    val localAppId = localProperties.getProperty("admob_app_id")
-    val admobAppId = localAppId
-      ?: System.getenv("ADMOB_APP_ID")
-      ?: "ca-app-pub-3940256099942544~3347511713" // Google 官方测试 App ID
-    manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
-
-    // 3. 处理 SMB 文件浏览广告单元 ID (Ad Unit ID) -> 注入到 BuildConfig
-    val localAdUnitId = localProperties.getProperty("admob_smb_file_browser_ad_unit_id")
-    val admobAdUnitId = localAdUnitId
-      ?: System.getenv("ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID")
-      ?: "ca-app-pub-3940256099942544/2247696110" // Google 官方测试广告单元 ID
-    buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$admobAdUnitId\"")
-
-    // ------------------------------------
-
   }
   splits {
     abi {
@@ -79,11 +77,16 @@ extensions.configure<ApplicationExtension> {
   buildTypes {
     named("release") {
       isMinifyEnabled = true
+      //noinspection NotShrinkingResources
       isShrinkResources = false
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro",
       )
+
+      // 注入 Release 正式 App ID 与 广告单元 ID
+      manifestPlaceholders["ADMOB_APP_ID"] = releaseAppId
+      buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$releaseAdUnitId\"")
     }
     create("preview") {
       initWith(getByName("release"))
@@ -91,10 +94,18 @@ extensions.configure<ApplicationExtension> {
       signingConfig = signingConfigs["debug"]
       applicationIdSuffix = ".preview"
       versionNameSuffix = "-${getCommitCount()}"
+
+      // Preview 建议使用测试 ID 或专属的 Preview ID，避免正式包 ID 校验失败
+      manifestPlaceholders["ADMOB_APP_ID"] = debugAppId
+      buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$debugAdUnitId\"")
     }
     named("debug") {
       applicationIdSuffix = ".debug"
       versionNameSuffix = "-${getCommitCount()}"
+
+      // 注入 Debug 专用 App ID 与 广告单元 ID
+      manifestPlaceholders["ADMOB_APP_ID"] = debugAppId
+      buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$debugAdUnitId\"")
     }
   }
   compileOptions {
@@ -106,32 +117,34 @@ extensions.configure<ApplicationExtension> {
     viewBinding = true
     buildConfig = true
   }
-  composeCompiler {
-    includeSourceInformation = true
-  }
   packaging {
     resources {
       excludes += "/META-INF/{AL2.0,LGPL2.1}"
-    }
-  }
-  val abiCodes = mapOf(
-    "armeabi-v7a" to 1,
-    "arm64-v8a" to 2,
-    "x86" to 3,
-    "x86_64" to 4,
-  )
-  androidComponents {
-    onVariants { variant ->
-      variant.outputs.forEach { output ->
-        val abi = output.filters.find { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier
-        output.versionCode.set((output.versionCode.orNull ?: 0) * 10 + (abiCodes[abi] ?: 0))
-      }
     }
   }
   androidResources {
     generateLocaleConfig = true
   }
   buildToolsVersion = "37.0.0"
+}
+
+composeCompiler {
+  includeSourceInformation = true
+}
+
+val abiCodes = mapOf(
+  "armeabi-v7a" to 1,
+  "arm64-v8a" to 2,
+  "x86" to 3,
+  "x86_64" to 4,
+)
+androidComponents {
+  onVariants { variant ->
+    variant.outputs.forEach { output ->
+      val abi = output.filters.find { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier
+      output.versionCode.set((output.versionCode.orNull ?: 0) * 10 + (abiCodes[abi] ?: 0))
+    }
+  }
 }
 
 // Package the project attribution and Apache 2.0 license in every APK.
