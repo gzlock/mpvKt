@@ -64,6 +64,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -89,6 +90,7 @@ import live.mehiz.mpvkt.preferences.preference.minusAssign
 import live.mehiz.mpvkt.preferences.preference.plusAssign
 import live.mehiz.mpvkt.ui.player.Decoder.Companion.getDecoderFromValue
 import live.mehiz.mpvkt.ui.player.Panels
+import live.mehiz.mpvkt.ui.player.PlaylistControlsPosition
 import live.mehiz.mpvkt.ui.player.PlayerActivity
 import live.mehiz.mpvkt.ui.player.PlaylistItem
 import live.mehiz.mpvkt.ui.player.PlayerUpdates
@@ -167,6 +169,10 @@ fun PlayerControls(
   val playlistShown by viewModel.playlistShown.collectAsState()
   val loopFile by viewModel.loopFile.collectAsState()
   val isSingleVideoLoop = loopFile == "inf" || loopFile == "yes"
+  val playlistControlsPosition by playerPreferences.playlistControlsPosition.collectAsState()
+  val configuration = LocalConfiguration.current
+  val isPortrait = configuration.screenHeightDp > configuration.screenWidthDp
+  val bottomControlsMargin = if (isPortrait) 8.dp else 0.dp
 
   LaunchedEffect(
     controlsShown,
@@ -215,6 +221,7 @@ fun PlayerControls(
         val (volumeSlider, brightnessSlider) = createRefs()
         val unlockControlsButton = createRef()
         val (bottomRightControls, bottomLeftControls) = createRefs()
+        val playlistControlsGroup = createRef()
         val playerPauseButton = createRef()
         val seekbar = createRef()
         val (playerUpdates) = createRefs()
@@ -555,14 +562,12 @@ fun PlayerControls(
             fadeOut(playerControlsExitAnimationSpec())
           },
           modifier = Modifier.constrainAs(bottomRightControls) {
-            bottom.linkTo(seekbar.top)
+            bottom.linkTo(seekbar.top, margin = bottomControlsMargin)
             end.linkTo(seekbar.end)
           },
         ) {
           BottomRightPlayerControls(
             isPipAvailable = activity.isPipSupported,
-            isSingleVideoLoop = isSingleVideoLoop,
-            onLoopClick = viewModel::toggleLoopMode,
             onPipClick = {
               activity.enterPip()
             },
@@ -575,6 +580,41 @@ fun PlayerControls(
                 },
               )
             },
+          )
+        }
+        // Playlist controls group
+        AnimatedVisibility(
+          controlsShown && !areControlsLocked,
+          enter = fadeIn(playerControlsEnterAnimationSpec()),
+          exit = fadeOut(playerControlsExitAnimationSpec()),
+          modifier = Modifier.constrainAs(playlistControlsGroup) {
+            bottom.linkTo(seekbar.top, margin = bottomControlsMargin)
+            // 把列表组整体限制在左组和右组之间的安全空间，避免越界重叠
+            start.linkTo(bottomLeftControls.end)
+            end.linkTo(bottomRightControls.start)
+            when (playlistControlsPosition) {
+              PlaylistControlsPosition.Left -> {
+                // 靠左组
+                horizontalBias = 0f
+              }
+              PlaylistControlsPosition.Center -> {
+                // 真正水平居中
+                horizontalBias = 0.5f
+              }
+              PlaylistControlsPosition.Right -> {
+                // 靠右组
+                horizontalBias = 1f
+              }
+            }
+          },
+        ) {
+          PlaylistControlsGroup(
+            playlistSize = playlist.size,
+            playlistPosition = playlistPosition ?: 0,
+            isSingleVideoLoop = isSingleVideoLoop,
+            onPrevClick = { viewModel.selectPlaylist((playlistPosition ?: 0) - 1) },
+            onNextClick = { viewModel.selectPlaylist((playlistPosition ?: 0) + 1) },
+            onLoopClick = viewModel::toggleLoopMode,
           )
         }
         // Bottom left controls
@@ -593,10 +633,8 @@ fun PlayerControls(
             fadeOut(playerControlsExitAnimationSpec())
           },
           modifier = Modifier.constrainAs(bottomLeftControls) {
-            bottom.linkTo(seekbar.top)
+            bottom.linkTo(seekbar.top, margin = bottomControlsMargin)
             start.linkTo(seekbar.start)
-            width = Dimension.fillToConstraints
-            end.linkTo(bottomRightControls.start)
           },
         ) {
           val showChapterIndicator by playerPreferences.currentChaptersIndicator.collectAsState()
@@ -734,8 +772,6 @@ private fun PlayerControlsPreview() {
             )
             BottomRightPlayerControls(
               isPipAvailable = true,
-              isSingleVideoLoop = false,
-              onLoopClick = {},
               onAspectClick = {},
               onPipClick = {},
             )

@@ -25,6 +25,7 @@ import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.preferences.PlayerPreferences
 import live.mehiz.mpvkt.preferences.preference.collectAsState
 import live.mehiz.mpvkt.presentation.Screen
+import live.mehiz.mpvkt.ui.player.PlaylistControlsPosition
 import live.mehiz.mpvkt.ui.player.PlayerOrientation
 import live.mehiz.mpvkt.ui.player.controls.components.sheets.toFixed
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
@@ -228,6 +229,15 @@ object PlayerPreferencesScreen : Screen {
             onValueChange = preferences.currentChaptersIndicator::set,
             title = { Text(stringResource(R.string.pref_player_controls_show_chapter_indicator)) },
             summary = { Text(stringResource(R.string.pref_player_controls_show_chapters_summary)) },
+          )
+          val playlistControlsPosition by preferences.playlistControlsPosition.collectAsState()
+          ListPreference(
+            value = playlistControlsPosition,
+            onValueChange = preferences.playlistControlsPosition::set,
+            values = PlaylistControlsPosition.entries,
+            valueToText = { AnnotatedString(context.getString(it.titleRes)) },
+            title = { Text(text = stringResource(id = R.string.pref_playlist_controls_position_title)) },
+            summary = { Text(text = stringResource(id = playlistControlsPosition.titleRes)) },
           )
 
           PreferenceCategory(

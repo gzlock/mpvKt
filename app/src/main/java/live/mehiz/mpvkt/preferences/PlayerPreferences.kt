@@ -2,6 +2,7 @@ package live.mehiz.mpvkt.preferences
 
 import live.mehiz.mpvkt.preferences.preference.PreferenceStore
 import live.mehiz.mpvkt.preferences.preference.getEnum
+import live.mehiz.mpvkt.ui.player.PlaylistControlsPosition
 import live.mehiz.mpvkt.ui.player.PlayerOrientation
 import live.mehiz.mpvkt.ui.player.VideoAspect
 
@@ -41,6 +42,7 @@ class PlayerPreferences(
   val automaticBackgroundPlayback = preferenceStore.getBoolean("automatic_background_playback")
   val closeAfterReachingEndOfVideo = preferenceStore.getBoolean("close_after_eof")
   val repeatPlaylist = preferenceStore.getBoolean("repeat_playlist", true)
+  val playlistControlsPosition = preferenceStore.getEnum("playlist_controls_position", PlaylistControlsPosition.Center)
 
   val rememberBrightness = preferenceStore.getBoolean("remember_rightness")
   val defaultBrightness = preferenceStore.getFloat("default_brightness", -1f)

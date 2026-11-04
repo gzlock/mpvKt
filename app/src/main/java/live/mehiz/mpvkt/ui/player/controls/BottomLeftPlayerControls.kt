@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.ScreenRotation
@@ -31,7 +30,7 @@ fun BottomLeftPlayerControls(
   modifier: Modifier = Modifier
 ) {
   Row(
-    modifier = modifier.fillMaxWidth(),
+    modifier = modifier,
     verticalAlignment = Alignment.CenterVertically,
   ) {
     ControlsButton(

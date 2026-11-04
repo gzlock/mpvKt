@@ -77,6 +77,12 @@ enum class Panels {
   VideoFilters,
 }
 
+enum class PlaylistControlsPosition(@StringRes val titleRes: Int) {
+  Left(R.string.pref_playlist_controls_position_left),
+  Center(R.string.pref_playlist_controls_position_center),
+  Right(R.string.pref_playlist_controls_position_right),
+}
+
 sealed class PlayerUpdates {
   data object None : PlayerUpdates()
   data object MultipleSpeed : PlayerUpdates()

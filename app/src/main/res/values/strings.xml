@@ -326,4 +326,8 @@
         <item quantity="one">%1$d second</item>
         <item quantity="other">%1$d seconds</item>
     </plurals>
+    <string name="pref_playlist_controls_position_title">Playlist controls (prev/next/loop) position</string>
+    <string name="pref_playlist_controls_position_left">Left</string>
+    <string name="pref_playlist_controls_position_center">Center</string>
+    <string name="pref_playlist_controls_position_right">Right</string>
 </resources>

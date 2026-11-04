@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import live.mehiz.mpvkt.ui.player.controls.LocalPlayerButtonsClickEvent
@@ -37,8 +38,11 @@ fun ControlsButton(
   color: Color = Color.White,
 ) {
   val interactionSource = remember { MutableInteractionSource() }
-
   val clickEvent = LocalPlayerButtonsClickEvent.current
+  val configuration = LocalConfiguration.current
+  val isPortrait = configuration.screenHeightDp > configuration.screenWidthDp
+  val buttonPadding = if (isPortrait) MaterialTheme.spacing.smaller else MaterialTheme.spacing.medium
+
   Box(
     modifier = modifier
       .combinedClickable(
@@ -55,7 +59,7 @@ fun ControlsButton(
         interactionSource,
         ripple()
       )
-      .padding(MaterialTheme.spacing.medium),
+      .padding(buttonPadding),
   ) {
     Icon(
       icon,
@@ -77,8 +81,11 @@ fun ControlsButton(
   color: Color = Color.White,
 ) {
   val interactionSource = remember { MutableInteractionSource() }
-
   val clickEvent = LocalPlayerButtonsClickEvent.current
+  val configuration = LocalConfiguration.current
+  val isPortrait = configuration.screenHeightDp > configuration.screenWidthDp
+  val buttonPadding = if (isPortrait) MaterialTheme.spacing.smaller else MaterialTheme.spacing.medium
+
   Box(
     modifier = modifier
       .combinedClickable(
@@ -96,7 +103,7 @@ fun ControlsButton(
         interactionSource,
         ripple()
       )
-      .padding(MaterialTheme.spacing.medium),
+      .padding(buttonPadding),
   ) {
     Text(
       text,
@@ -108,7 +115,7 @@ fun ControlsButton(
 
 @Preview
 @Composable
-private fun PreviewControlsButton() {
+private fun Preview() {
   ControlsButton(
     Icons.Default.CatchingPokemon,
     onClick = {},

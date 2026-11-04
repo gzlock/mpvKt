@@ -202,5 +202,9 @@
     <string name="show_splash_ovals_on_double_tap_to_seek">双击跳转时显示涟漪效果</string>
     <string name="show_icon_on_double_tap_to_seek">显示跳转时间</string>
     <string name="show_time_on_double_tap_to_seek">显示跳转图标</string>
+    <string name="pref_playlist_controls_position_title">列表控制组（上一个/下一个/循环）位置</string>
+    <string name="pref_playlist_controls_position_left">左侧（紧邻左下角控制组）</string>
+    <string name="pref_playlist_controls_position_center">屏幕居中（默认）</string>
+    <string name="pref_playlist_controls_position_right">右侧（紧邻右下角控制组）</string>
 
 </resources>
