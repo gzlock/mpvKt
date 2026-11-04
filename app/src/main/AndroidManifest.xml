@@ -33,6 +33,9 @@
             </intent-filter>
         </activity>
 
+        <!-- Own taskAffinity on purpose: a singleTask activity is launched with NEW_TASK, and the
+             default affinity would match the task rooted at MainActivity, stacking the player on
+             top of HomeScreen so Back returns to the app instead of the caller that opened the uri. -->
         <activity
             android:name=".ui.player.PlayerActivity"
             android:autoRemoveFromRecents="true"
@@ -41,6 +44,7 @@
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
+            android:taskAffinity="live.mehiz.mpvkt.player"
             android:theme="@style/Theme.MpvKt">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
