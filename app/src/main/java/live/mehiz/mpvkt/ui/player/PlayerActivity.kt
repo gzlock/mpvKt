@@ -194,16 +194,30 @@ class PlayerActivity : AppCompatActivity() {
     var initialPath = playlistUrls.getOrNull(playlistStartPosition) ?: getPlayableUri(playIntent)
     if (playlistUrls.isEmpty()) {
       buildLocalPlaylist(initialPath)
+      if (playlistUrls.isEmpty()) {
+        fillSingleItemPlaylist(playIntent, initialPath)
+      }
       playlistStartPosition = playlistUrls.indexOf(initialPath).takeIf { it >= 0 } ?: 0
       initialPath = playlistUrls.getOrNull(playlistStartPosition) ?: initialPath
     }
     viewModel.setPlaylist(
       playlistUrls.mapIndexed { index, source ->
-        PlaylistItem(playlistTitles.getOrNull(index) ?: source.substringAfterLast('/'), source)
+        PlaylistItem(playlistTitles.getOrNull(index) ?: mediaDisplayName(source) ?: source, source)
       },
       playlistStartPosition,
     )
     return initialPath
+  }
+
+  /**
+   * Intents from other apps (ACTION_VIEW/SEND) carry a single media source and no playlist extras,
+   * while [buildLocalPlaylist] can only enumerate a local directory. Fall back to a one-item
+   * playlist so the drawer always reflects what mpv actually plays.
+   */
+  private fun fillSingleItemPlaylist(playIntent: Intent, initialPath: String?) {
+    val source = initialPath?.takeIf { it.isNotBlank() } ?: return
+    playlistUrls = listOf(source)
+    playlistTitles = listOf(getFileName(playIntent).ifBlank { mediaDisplayName(source) ?: source })
   }
 
   private fun buildLocalPlaylist(path: String?) {
@@ -547,16 +561,31 @@ class PlayerActivity : AppCompatActivity() {
     }
   }
 
+  /** The raw media source carried by the intent, before it is resolved into a playable path. */
+  private fun rawSourceOf(intent: Intent): String? = when (intent.action) {
+    Intent.ACTION_VIEW -> intent.data?.toString()
+    Intent.ACTION_SEND -> IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)?.toString()
+      ?: intent.getStringExtra(Intent.EXTRA_TEXT)
+    else -> intent.getStringExtra("uri")
+  }
+
   private fun getFileName(intent: Intent): String {
     val uri = if (intent.type == "text/plain") {
-      intent.getStringExtra(Intent.EXTRA_TEXT)!!.toUri()
+      intent.getStringExtra(Intent.EXTRA_TEXT)?.toUri()
     } else {
       (intent.data ?: IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java))
     }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && uri != null) {
-      val cursor = contentResolver.query(uri, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null)
-      if (cursor?.moveToFirst() == true) return cursor.getString(0).also { cursor.close() }
+    val contentUri = uri?.takeIf { it.scheme == "content" }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && contentUri != null) {
+      // The provider's DISPLAY_NAME is more trustworthy than the uri's last path segment, which
+      // for document uris is just an opaque id.
+      val displayName = runCatching {
+        contentResolver.query(contentUri, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null)
+          ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+      }.getOrNull()
+      mediaDisplayName(displayName)?.let { return it }
     }
+    mediaDisplayName(rawSourceOf(intent))?.let { return it }
     return uri?.lastPathSegment?.substringAfterLast("/") ?: uri?.path ?: ""
   }
 

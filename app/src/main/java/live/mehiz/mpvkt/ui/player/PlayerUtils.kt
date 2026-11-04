@@ -6,6 +6,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import `is`.xyz.mpv.MPVNode
 import `is`.xyz.mpv.Utils
+import java.net.URLDecoder
 import kotlinx.serialization.json.Json
 
 internal fun Uri.openContentFd(context: Context): String? {
@@ -54,5 +55,26 @@ internal val imageExtensions = listOf(
   "apng", "bmp", "exr", "gif", "j2c", "j2k", "jfif", "jp2", "jpc", "jpe", "jpeg", "jpg",
   "jpg2", "png", "tga", "tif", "tiff", "webp",
 )
+
+/**
+ * Derives a display name from a media source string.
+ *
+ * Drops the query/fragment, decodes percent-encoded segments and keeps the last path segment, so
+ * `http://host/a/c.mp4?token=1` resolves to `c.mp4` and `/sdcard/a/c.mkv` to `c.mkv`.
+ * Returns null when nothing usable can be derived.
+ */
+internal fun mediaDisplayName(source: String?): String? {
+  if (source.isNullOrBlank()) return null
+  val path = source.substringBefore('?').substringBefore('#').trimEnd('/')
+  val segment = path.substringAfterLast('/')
+  if (segment.isBlank()) return null
+  return decodeUrlSegment(segment).ifBlank { null }
+}
+
+private fun decodeUrlSegment(segment: String): String {
+  if ('%' !in segment) return segment
+  // URLDecoder maps "+" to a space, but a literal "+" in a path is not form-encoded data.
+  return runCatching { URLDecoder.decode(segment.replace("+", "%2B"), "UTF-8") }.getOrDefault(segment)
+}
 
 inline fun <reified T> MPVNode.toObject(json: Json): T = json.decodeFromString<T>(toJson())
