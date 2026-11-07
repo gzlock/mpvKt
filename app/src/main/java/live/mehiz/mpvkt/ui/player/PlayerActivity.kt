@@ -88,6 +88,8 @@ class PlayerActivity : AppCompatActivity() {
   private var playlistUrls: List<String> = emptyList()
   private var playlistTitles: List<String> = emptyList()
   private var playlistStartPosition = 0
+  // 本次会话已自动添加的本地字幕路径，播放列表内切换文件时据此避免重复 sub-add。
+  private val loadedAutoSubtitlePaths = mutableSetOf<String>()
   // One-shot opt-in: initial loads and explicit playlist selections may resume their saved position.
   private var restorePositionOnNextFileLoaded = true
   private var smbProfileId: String? = null
@@ -181,6 +183,8 @@ class PlayerActivity : AppCompatActivity() {
 
   private fun configurePlaylist(playIntent: Intent): String? {
     restorePositionOnNextFileLoaded = true
+    // 新 intent（含 onNewIntent）代表新的播放来源，重置去重集合以便字幕重新加载。
+    loadedAutoSubtitlePaths.clear()
     smbProfileId = playIntent.getStringExtra("smb_profile_id")
     smbShareName = playIntent.getStringExtra("smb_share")
     smbDirectoryPath = playIntent.getStringExtra("smb_directory_path")
@@ -231,6 +235,39 @@ class PlayerActivity : AppCompatActivity() {
     if (files.isEmpty()) return
     playlistUrls = files.map { it.absolutePath }
     playlistTitles = files.map { it.name }
+  }
+
+  /**
+   * 针对当前播放的本地文件，按目录规则加载外部字幕，每次 FILE_LOADED 调用。
+   *
+   * - 仅处理普通文件系统路径，http/fd 等协议路径在此跳过（SMB 字幕由 intent subs 处理）；
+   * - 与 [loadedAutoSubtitlePaths] 及 intent 自带 subs 去重，播放列表内切换文件不会产生重复轨，
+   *   且新视频的同名前缀字幕会在切换时补载；
+   * - 当前没有选中任何字幕（sid 为空）时，第一条新字幕以 select 自动显示，其余以 auto 入列表。
+   */
+  private fun loadAutoSubtitles(currentPath: String?) {
+    if (currentPath.isNullOrBlank() || currentPath.contains("://") || currentPath.startsWith("fd://")) return
+    if (!subtitlesPreferences.autoLoadExternal.get()) return
+    val file = File(currentPath)
+    val parent = file.parentFile ?: return
+    val allNames = parent.listFiles()
+      ?.filter { it.isFile }
+      ?.map { it.name }
+      ?: return
+    val intentSubPaths = intent.extras
+      ?.takeIf { it.containsKey("subs") }
+      ?.let { Utils.getParcelableArray<Uri>(it, "subs") }
+      ?.mapNotNull { it.resolveUri(this) }
+      .orEmpty()
+      .toSet()
+    resolveAutoSubtitles(allNames, file.name)
+      .map { File(parent, it).absolutePath }
+      .filterNot { it in loadedAutoSubtitlePaths || it in intentSubPaths }
+      .forEachIndexed { index, subtitlePath ->
+        loadedAutoSubtitlePaths.add(subtitlePath)
+        val flag = if (index == 0 && MPVLib.getPropertyInt("sid") == null) "select" else "auto"
+        MPVLib.command("sub-add", subtitlePath, flag)
+      }
   }
 
   fun selectPlaylistItem(position: Int) {
@@ -666,6 +703,7 @@ class PlayerActivity : AppCompatActivity() {
         fileName = playlistTitles.getOrNull(playlistPosition) ?: getFileName(intent)
         viewModel.setPlaylistPosition(playlistPosition)
         setIntentExtras(intent.extras)
+        loadAutoSubtitles(playlistUrls.getOrNull(playlistPosition))
         if (!restorePosition) MPVLib.setPropertyInt("time-pos", 0)
         if (smbProfileId != null) {
           // SMB streams use an internal proxy URL, whose generated id is not a useful title.

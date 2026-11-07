@@ -76,13 +76,15 @@ import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.network.smb.SmbAuthStage
 import live.mehiz.mpvkt.network.smb.SmbEntry
 import live.mehiz.mpvkt.network.smb.SmbBrowserPreferences
-import live.mehiz.mpvkt.network.smb.SmbPlaybackItem
+import live.mehiz.mpvkt.network.smb.SmbPlaylist
 import live.mehiz.mpvkt.network.smb.SmbProfile
 import live.mehiz.mpvkt.network.smb.SmbProfileStore
 import live.mehiz.mpvkt.network.smb.SmbRuntime
 import live.mehiz.mpvkt.network.smb.SmbSortOrder
 import live.mehiz.mpvkt.presentation.Screen
+import live.mehiz.mpvkt.preferences.SubtitlesPreferences
 import live.mehiz.mpvkt.ui.player.PlayerActivity
+import live.mehiz.mpvkt.ui.player.subtitleExtensions
 import live.mehiz.mpvkt.ui.player.videoExtensions
 import live.mehiz.mpvkt.ui.smb.ads.SmbAdPageKey
 import live.mehiz.mpvkt.ui.smb.ads.SmbAdSlotKey
@@ -472,6 +474,7 @@ data class SmbBrowserScreen(
     val runtime = koinInject<SmbRuntime>()
     val profileStore = koinInject<SmbProfileStore>()
     val browserPreferences = koinInject<SmbBrowserPreferences>()
+    val subtitlesPreferences = koinInject<SubtitlesPreferences>()
     val browserViewModel = remember(context) {
       val owner = context.findViewModelStoreOwner()
         ?: error("SMB browser must be hosted by a ViewModelStoreOwner")
@@ -855,10 +858,23 @@ data class SmbBrowserScreen(
                                         finish()
                                       }
                                     } else {
-                                      val items = withContext(Dispatchers.IO) {
-                                        runtime.playlist(selectedProfile, entry.path, sortOrder)
+                                      val autoLoadSubtitles = subtitlesPreferences.autoLoadExternal.get()
+                                      val playlist = withContext(Dispatchers.IO) {
+                                        runtime.playlist(
+                                          selectedProfile,
+                                          entry.path,
+                                          sortOrder,
+                                          autoLoadSubtitles,
+                                        )
                                       }
-                                      openSmbPlaylist(context, profileId, shareName.orEmpty(), path, items, entry.path)
+                                      openSmbPlaylist(
+                                        context,
+                                        profileId,
+                                        shareName.orEmpty(),
+                                        path,
+                                        playlist,
+                                        entry.path,
+                                      )
                                     }
                                   }.onFailure { error = it.message ?: unableOpenText }
                                 }
@@ -929,8 +945,6 @@ data class SmbBrowserScreen(
     }
   }
 }
-
-private val subtitleExtensions = setOf("srt", "ass", "ssa", "vtt", "sub")
 
 /** 目录页对应的广告缓存 key。 */
 private fun SmbBrowserScreen.toAdPageKey(): SmbAdPageKey =
@@ -1031,9 +1045,10 @@ private fun openSmbPlaylist(
   profileId: String,
   shareName: String,
   directoryPath: String,
-  items: List<SmbPlaybackItem>,
+  playlist: SmbPlaylist,
   selectedPath: String,
 ) {
+  val items = playlist.items
   if (items.isEmpty()) return
   val selectedIndex = items.indexOfFirst { it.remotePath == selectedPath }.takeIf { it >= 0 } ?: 0
   val intent = Intent(Intent.ACTION_VIEW).setClass(context, PlayerActivity::class.java)
@@ -1044,5 +1059,11 @@ private fun openSmbPlaylist(
     .putExtra("smb_profile_id", profileId)
     .putExtra("smb_share", shareName)
     .putExtra("smb_directory_path", directoryPath)
+  if (playlist.subtitles.isNotEmpty()) {
+    // 经现有 subs/subs.enable 机制传递：首条自动选中，其余在字幕轨列表中可选。
+    val subtitleUris = playlist.subtitles.map { Uri.parse(it.streamUrl) }.toTypedArray()
+    intent.putExtra("subs", subtitleUris)
+    intent.putExtra("subs.enable", arrayOf(subtitleUris.first()))
+  }
   context.startActivity(intent)
 }

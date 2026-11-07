@@ -1,12 +1,22 @@
 package live.mehiz.mpvkt.network.smb
 
 import android.util.Log
+import live.mehiz.mpvkt.ui.player.resolveAutoSubtitles
 import live.mehiz.mpvkt.ui.player.videoExtensions
 import live.mehiz.mpvkt.ui.utils.NaturalSort
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 
 data class SmbPlaybackItem(val name: String, val remotePath: String, val streamUrl: String)
+
+/**
+ * 一个 SMB 目录的播放清单：[items] 为视频项，[subtitles] 为按自动加载规则发布的字幕项。
+ * 字幕代理 URL 与视频共用同一个本地 HTTP 代理，播放期间持续有效。
+ */
+data class SmbPlaylist(
+  val items: List<SmbPlaybackItem>,
+  val subtitles: List<SmbPlaybackItem>,
+)
 
 class SmbRuntime(
   private val profileStore: SmbProfileStore,
@@ -57,7 +67,9 @@ class SmbRuntime(
     profile: SmbProfile,
     path: String,
     sortOrder: SmbSortOrder = SmbSortOrder.NAME_ASC,
-  ): List<SmbPlaybackItem> {
+    // 调用方依据“自动加载外部字幕”开关传入；关闭时不打开任何字幕远程句柄。
+    autoLoadSubtitles: Boolean = true,
+  ): SmbPlaylist {
     val directory = path.substringBeforeLast('/', "")
     val comparator = when (sortOrder) {
       SmbSortOrder.NAME_ASC -> Comparator<SmbEntry> { left, right -> NaturalSort.compare(left.name, right.name) }
@@ -65,7 +77,8 @@ class SmbRuntime(
       SmbSortOrder.MODIFIED_ASC -> compareBy<SmbEntry> { it.modifiedTime }.thenBy(NaturalSort.comparator) { it.name }
       SmbSortOrder.MODIFIED_DESC -> compareByDescending<SmbEntry> { it.modifiedTime }.thenByDescending(NaturalSort.comparator) { it.name }
     }
-    return list(profile, directory)
+    val entries = list(profile, directory)
+    val videoItems = entries
       .asSequence()
       .filter { !it.directory && videoExtensions.contains(it.name.substringAfterLast('.', "").lowercase()) }
       .sortedWith(comparator)
@@ -74,6 +87,20 @@ class SmbRuntime(
         SmbPlaybackItem(item.name, item.path, playbackProxy().publish(remoteFile))
       }
       .toList()
+
+    val fileNames = entries.filter { !it.directory }.map { it.name }
+    val currentVideoName = path.substringAfterLast('/')
+    val subtitleItems = if (!autoLoadSubtitles) {
+      emptyList()
+    } else {
+      // 与本地浏览器共用同一套判定规则（单视频全量、多视频同名前缀）。
+      resolveAutoSubtitles(fileNames, currentVideoName).map { subtitleName ->
+        val subtitleEntry = entries.first { !it.directory && it.name == subtitleName }
+        val remoteFile = connect(profile).open(subtitleEntry.path)
+        SmbPlaybackItem(subtitleName, subtitleEntry.path, playbackProxy().publish(remoteFile))
+      }
+    }
+    return SmbPlaylist(videoItems, subtitleItems)
   }
 
   fun stream(profile: SmbProfile, path: String): String {

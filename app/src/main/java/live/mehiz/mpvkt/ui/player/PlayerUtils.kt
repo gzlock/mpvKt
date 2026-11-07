@@ -8,6 +8,7 @@ import `is`.xyz.mpv.MPVNode
 import `is`.xyz.mpv.Utils
 import java.net.URLDecoder
 import kotlinx.serialization.json.Json
+import live.mehiz.mpvkt.ui.utils.NaturalSort
 
 internal fun Uri.openContentFd(context: Context): String? {
   return context.contentResolver.openFileDescriptor(this, "r")?.detachFd()?.let {
@@ -55,6 +56,43 @@ internal val imageExtensions = listOf(
   "apng", "bmp", "exr", "gif", "j2c", "j2k", "jfif", "jp2", "jpc", "jpe", "jpeg", "jpg",
   "jpg2", "png", "tga", "tif", "tiff", "webp",
 )
+
+/** 外部字幕文件扩展名，本地文件浏览器与 SMB 浏览器共用。 */
+internal val subtitleExtensions = listOf("srt", "vtt", "ass", "ssa", "sub")
+
+/** 取文件名的小写扩展名；无扩展名时返回空字符串。 */
+private fun String.lowercaseExtension(): String = substringAfterLast('.', "").lowercase()
+
+/**
+ * 计算同级目录中应随当前视频自动加载的字幕文件名。
+ *
+ * 规则：
+ * - 目录中恰好只有一个视频时，返回全部字幕，不要求文件名与视频匹配；
+ * - 存在多个视频时，仅返回与 [currentVideoName] 同名前缀的字幕，沿用历史匹配规则；
+ * - 以“.”开头的隐藏文件始终忽略，扩展名大小写不敏感；
+ * - 结果按自然排序（[NaturalSort]）排列，便于第一条作为默认选中项。
+ *
+ * 纯字符串逻辑、不依赖文件系统，本地与 SMB 两条链路共用，便于单元测试。
+ */
+internal fun resolveAutoSubtitles(
+  fileNames: Collection<String>,
+  currentVideoName: String,
+): List<String> {
+  val visibleNames = fileNames.filterNot { it.startsWith('.') }
+  val videoCount = visibleNames.count { it.lowercaseExtension() in videoExtensions }
+  if (videoCount == 0) return emptyList()
+  val subtitles = visibleNames.filter { it.lowercaseExtension() in subtitleExtensions }
+  if (subtitles.isEmpty()) return emptyList()
+
+  if (videoCount == 1) return subtitles.sortedWith(NaturalSort.comparator)
+
+  // 多视频目录：只加载与当前视频同名前缀的字幕；当前名为空时不做模糊匹配，避免误加载全部字幕。
+  val videoNameWithoutExt = currentVideoName.substringBeforeLast('.')
+  if (videoNameWithoutExt.isBlank()) return emptyList()
+  return subtitles
+    .filter { it.substringBeforeLast('.').startsWith(videoNameWithoutExt) }
+    .sortedWith(NaturalSort.comparator)
+}
 
 /**
  * Derives a display name from a media source string.

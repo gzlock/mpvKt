@@ -1,7 +1,5 @@
 package live.mehiz.mpvkt.ui.home
 
-import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,9 +45,7 @@ import com.github.k1rakishou.fsaf.file.AbstractFile
 import `is`.xyz.mpv.Utils
 import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.R
-import live.mehiz.mpvkt.preferences.SubtitlesPreferences
 import live.mehiz.mpvkt.presentation.Screen
-import live.mehiz.mpvkt.ui.player.PlayerActivity
 import live.mehiz.mpvkt.ui.player.audioExtensions
 import live.mehiz.mpvkt.ui.player.imageExtensions
 import live.mehiz.mpvkt.ui.player.videoExtensions
@@ -73,7 +69,6 @@ data class FilePickerScreen(val uri: String) : Screen {
     val backstack = LocalBackStack.current
     val fileManager = koinInject<FileManager>()
     val context = LocalContext.current
-    val subtitlesPreferences = koinInject<SubtitlesPreferences>()
     Scaffold(
       topBar = {
         TopAppBar(
@@ -94,26 +89,8 @@ data class FilePickerScreen(val uri: String) : Screen {
         directory = fileManager.fromUri(uri.toUri())!!,
         onNavigate = { newFile ->
           if (fileManager.isFile(newFile)) {
-            if (subtitlesPreferences.autoLoadExternal.get()) {
-              val videoNameWithoutExt = fileManager.getName(newFile).substringBeforeLast(".")
-              val parentDir = fileManager.fromUri(uri.toUri())!!
-              val subtitleExtensions = setOf("srt", "ass", "ssa", "vtt", "sub")
-              val subtitlePaths = fileManager.listFiles(parentDir).filter { potentialSubFile ->
-                if (fileManager.isDirectory(potentialSubFile)) {
-                  false
-                } else {
-                  val subFileName = fileManager.getName(potentialSubFile)
-                  val subFileNameWithoutExt = subFileName.substringBeforeLast('.')
-                  val subFileExt = subFileName.substringAfterLast('.').lowercase()
-                  // Matching rule: File names have the same prefix and the extension is a subtitle format
-                  subFileNameWithoutExt.startsWith(videoNameWithoutExt) && subFileExt in subtitleExtensions
-                }
-              }.map { it.getFullPath() }
-
-              playFileWithSubtitles(newFile.getFullPath(), subtitlePaths, context)
-            } else {
-              HomeScreen.playFile(newFile.getFullPath(), context)
-            }
+            // 外部字幕的扫描与加载统一由 PlayerActivity 处理，这里只负责启动播放。
+            HomeScreen.playFile(newFile.getFullPath(), context)
             return@FilePicker
           }
           backstack.add(FilePickerScreen(newFile.getFullPath()))
@@ -252,21 +229,6 @@ data class FilePickerScreen(val uri: String) : Screen {
       in imageExtensions -> Icons.Filled.Image
       else -> Icons.AutoMirrored.Filled.InsertDriveFile
     }
-  }
-
-  fun playFileWithSubtitles(
-    filepath: String,
-    subtitlePaths: List<String>,
-    context: Context,
-  ) {
-    val i = Intent(Intent.ACTION_VIEW, filepath.toUri())
-    i.setClass(context, PlayerActivity::class.java)
-    if (subtitlePaths.isNotEmpty()) {
-      val subtitleUris = subtitlePaths.map { it.toUri() }.toTypedArray()
-      i.putExtra("subs", subtitleUris)
-      i.putExtra("subs.enable", arrayOf(subtitleUris.first()))
-    }
-    context.startActivity(i)
   }
 
   private fun Long.asHumanReadableByteCountBin(): String {

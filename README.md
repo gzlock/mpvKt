@@ -11,6 +11,14 @@ This repository is a derivative work based on the original [mpvKt project](https
 - Sleep timer, Speed presets
 - Smoother PiP
 
+### v0.1.12
+- Auto-load all external subtitles (`.srt`, `.vtt`, `.ass`, `.ssa`, `.sub`) when a directory contains a single video, in both the local and SMB browsers as well as videos opened from external apps; the first subtitle is selected automatically
+- Playlist controls group in the player: previous/next track and a loop-mode toggle (single-file vs. playlist repeat), with its position configurable to left, center, or right
+- Video thumbnails in the SMB browser, backed by on-disk caching
+- More reliable media display names: query/fragment stripping and percent-encoding decoding
+- Dedicated task affinity for the player so Back returns to the calling app when a video is opened externally
+- Playlist drawer now opens scrolled to the currently playing item
+
 ### v0.1.11
 - Natural sorting for file and folder names in the player and SMB browser
 - Enhanced SMB directory sorting
