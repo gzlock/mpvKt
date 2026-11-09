@@ -46,5 +46,21 @@
 # into BouncyCastle by class name and instantiated reflectively, so keep them under R8.
 -keep class live.mehiz.mpvkt.network.remote.SmbCrypto$* { *; }
 
+# JSch (mwiede fork) drives SFTP and the SSH exec channel used to run server commands.
+# It loads key exchange, cipher, MAC, signature, random and user-auth implementations by
+# class name through reflection (com.jcraft.jsch.jce.* / .bc.* / UserAuth*); R8 treats
+# them as unused and removes them, which breaks command execution only on release builds.
+-keep class com.jcraft.jsch.** { *; }
+-dontwarn com.jcraft.jsch.**
+
+# Optional compression/EdDSA backends JSch looks up reflectively but the app does not bundle.
+-dontwarn com.jcraft.jzlib.**
+-dontwarn net.i2p.crypto.eddsa.**
+
+# commons-net powers the FTP client; keep its implementation so protocol/parser classes
+# reached dynamically (socket factories, FTP entry parsers) survive shrinking.
+-keep class org.apache.commons.net.** { *; }
+-dontwarn org.apache.commons.net.**
+
 -keep class is.xyz.mpv.MPV { *; }
 -keep class is.xyz.mpv.BaseMPVView { *; }

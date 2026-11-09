@@ -5,6 +5,14 @@ A media player for Android based on [mpv-android](https://github.com/mpv-android
 
 This repository is a derivative work based on the original [mpvKt project](https://github.com/abdallahmehiz/mpvKt) by abdallahmehiz. This fork is maintained at [gzlock/mpvKt](https://github.com/gzlock/mpvKt) and contains modifications. It is distributed under the [Apache License 2.0](LICENSE).
 ## Additional features
+- Browse and stream media from remote network storage over SMB, FTP, SFTP, and WebDAV, with connection profiles encrypted and saved securely
+- Auto-load external subtitles from local and remote directories, and pick remote subtitles directly from the player
+- Video thumbnails in the remote browser, backed by on-disk caching
+- Folder playlists with previous/next controls and configurable repeat/loop modes
+- Natural sorting for file and folder names, with scroll-position restoration when browsing directories
+- Configurable gesture controls: double-tap and horizontal drag to seek, vertical drag to adjust brightness and volume
+- In-player panels for subtitle and video settings (typography, colors, filters, deband), audio/subtitle delay, and track, chapter, and decoder selection
+- Custom server command snippets executed over SSH on SFTP and SMB connections
 - Nicer player UI
 - Better playback history implementation
 - Easier customization
