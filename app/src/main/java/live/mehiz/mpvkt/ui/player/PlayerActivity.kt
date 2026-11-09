@@ -56,7 +56,7 @@ import live.mehiz.mpvkt.preferences.AudioPreferences
 import live.mehiz.mpvkt.preferences.GesturePreferences
 import live.mehiz.mpvkt.preferences.PlayerPreferences
 import live.mehiz.mpvkt.preferences.SubtitlesPreferences
-import live.mehiz.mpvkt.network.smb.SmbRuntime
+import live.mehiz.mpvkt.network.remote.RemoteRuntime
 import live.mehiz.mpvkt.ui.player.PlaylistItem
 import live.mehiz.mpvkt.ui.player.controls.PlayerControls
 import live.mehiz.mpvkt.ui.theme.MpvKtTheme
@@ -81,7 +81,7 @@ class PlayerActivity : AppCompatActivity() {
   private val advancedPreferences: AdvancedPreferences by inject()
   private val gesturePreferences: GesturePreferences by inject()
   private val fileManager: FileManager by inject()
-  private val smbRuntime: SmbRuntime by inject()
+  private val remoteRuntime: RemoteRuntime by inject()
 
   private var fileName = ""
   private var playlistInitialized = false
@@ -92,9 +92,9 @@ class PlayerActivity : AppCompatActivity() {
   private val loadedAutoSubtitlePaths = mutableSetOf<String>()
   // One-shot opt-in: initial loads and explicit playlist selections may resume their saved position.
   private var restorePositionOnNextFileLoaded = true
-  private var smbProfileId: String? = null
-  private var smbShareName: String? = null
-  private var smbDirectoryPath: String? = null
+  private var remoteProfileId: String? = null
+  private var remoteShareName: String? = null
+  private var remoteDirectoryPath: String? = null
   private var mediaPlaybackService: MediaPlaybackService? = null
   private var serviceBound = false
 
@@ -176,7 +176,7 @@ class PlayerActivity : AppCompatActivity() {
     if (isFinishing) MPVLib.command("stop")
     MPVLib.removeObserver(playerObserver)
     player.destroy()
-    smbRuntime.closePlayback()
+    remoteRuntime.closePlayback()
 
     super.onDestroy()
   }
@@ -185,9 +185,9 @@ class PlayerActivity : AppCompatActivity() {
     restorePositionOnNextFileLoaded = true
     // 新 intent（含 onNewIntent）代表新的播放来源，重置去重集合以便字幕重新加载。
     loadedAutoSubtitlePaths.clear()
-    smbProfileId = playIntent.getStringExtra("smb_profile_id")
-    smbShareName = playIntent.getStringExtra("smb_share")
-    smbDirectoryPath = playIntent.getStringExtra("smb_directory_path")
+    remoteProfileId = playIntent.getStringExtra("smb_profile_id")
+    remoteShareName = playIntent.getStringExtra("smb_share")
+    remoteDirectoryPath = playIntent.getStringExtra("smb_directory_path")
     // A previous SMB item may have forced its filename as the media title.
     // Clear it before loading another intent; intent titles are reapplied below.
     MPVLib.setPropertyString("force-media-title", "")
@@ -278,24 +278,24 @@ class PlayerActivity : AppCompatActivity() {
     MPVLib.setPropertyBoolean("pause", false)
   }
 
-  fun createSmbSubtitlePickerIntent(): Intent {
+  fun createRemoteSubtitlePickerIntent(): Intent {
     return Intent(this, live.mehiz.mpvkt.MainActivity::class.java).apply {
-      putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_SUBTITLE_PICKER, true)
-      smbProfileId?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_PROFILE_ID, it) }
-      smbShareName?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_SHARE, it) }
-      smbDirectoryPath?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_SMB_DIRECTORY_PATH, it) }
+      putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_REMOTE_SUBTITLE_PICKER, true)
+      remoteProfileId?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_REMOTE_PROFILE_ID, it) }
+      remoteShareName?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_REMOTE_SHARE, it) }
+      remoteDirectoryPath?.let { putExtra(live.mehiz.mpvkt.MainActivity.EXTRA_REMOTE_DIRECTORY_PATH, it) }
     }
   }
 
-  private val smbSubtitlePickerLauncher =
+  private val remoteSubtitlePickerLauncher =
     registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
       if (result.resultCode == RESULT_OK) {
         result.data?.data?.let(viewModel::addSubtitle)
       }
     }
 
-  internal fun launchSmbSubtitlePicker() {
-    smbSubtitlePickerLauncher.launch(createSmbSubtitlePickerIntent())
+  internal fun launchRemoteSubtitlePicker() {
+    remoteSubtitlePickerLauncher.launch(createRemoteSubtitlePickerIntent())
   }
 
   override fun onPause() {
@@ -705,7 +705,7 @@ class PlayerActivity : AppCompatActivity() {
         setIntentExtras(intent.extras)
         loadAutoSubtitles(playlistUrls.getOrNull(playlistPosition))
         if (!restorePosition) MPVLib.setPropertyInt("time-pos", 0)
-        if (smbProfileId != null) {
+        if (remoteProfileId != null) {
           // SMB streams use an internal proxy URL, whose generated id is not a useful title.
           MPVLib.setPropertyString("force-media-title", fileName)
         }

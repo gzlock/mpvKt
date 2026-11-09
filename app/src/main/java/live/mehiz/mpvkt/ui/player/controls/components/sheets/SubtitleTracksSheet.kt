@@ -33,7 +33,7 @@ fun SubtitlesSheet(
   tracks: ImmutableList<TrackNode>,
   onSelect: (Int) -> Unit,
   onAddSubtitle: () -> Unit,
-  onPickSmbSubtitle: () -> Unit,
+  onPickRemoteSubtitle: () -> Unit,
   onOpenSubtitleSettings: () -> Unit,
   onOpenSubtitleDelay: () -> Unit,
   onDismissRequest: () -> Unit,
@@ -56,8 +56,8 @@ fun SubtitlesSheet(
         },
       )
       AddTrackRow(
-        stringResource(R.string.player_sheets_add_smb_sub),
-        onPickSmbSubtitle,
+        stringResource(R.string.player_sheets_add_remote_sub),
+        onPickRemoteSubtitle,
       )
     },
     track = { track ->
@@ -134,7 +134,7 @@ private fun SubtitlesSheetPreview() {
     ),
     onSelect = {},
     onAddSubtitle = {},
-    onPickSmbSubtitle = {},
+    onPickRemoteSubtitle = {},
     onOpenSubtitleSettings = {},
     onOpenSubtitleDelay = {},
     onDismissRequest = {},

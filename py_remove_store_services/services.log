@@ -1,0 +1,25 @@
+================================================================
+ mpvKt 远程存储测试服务 - 端口映射表
+================================================================
+  FTP      : ftp://<host>:10000    账号 testuser / testpass（匿名可读）
+  SSH/SFTP : ssh://<host>:10001    账号 testuser / testpass
+  SMB      : \\<host>\share 端口 10002  账号 testuser / testpass
+  WebDAV   : http://<host>:10003/   账号 testuser / testpass（匿名可读）
+----------------------------------------------------------------
+  共享根目录: E:\mpvKt\py_remove_store_service\share_files
+  Android 模拟器里 <host> 填 10.0.2.2；真机连电脑局域网 IP。
+  按 Ctrl+C 停止全部服务。
+================================================================
+
+[OK] 已启动 4/4 个服务，按 Ctrl+C 退出。
+
+22:47:53.781 - WARNING : App wsgidav.mw.cors.Cors(None).is_disabled() returned True: skipping.
+22:47:53.843 - INFO    : WsgiDAV/4.4.0 Python/3.15.2 Windows-10-10.0.19045-SP0
+22:47:53.843 - INFO    : Lock manager:      LockManager(LockStorageDict)
+22:47:53.843 - INFO    : Property manager:  None
+22:47:53.843 - INFO    : Domain controller: SimpleDomainController()
+22:47:53.844 - INFO    : Registered DAV providers by route:
+22:47:53.844 - INFO    :   - '/:dir_browser': FilesystemProvider for path 'E:\\mpvKt\\py_remove_store_service\\.venv\\Lib\\site-packages\\wsgidav\\dir_browser\\htdocs' (Read-Only) (anonymous)
+22:47:53.844 - INFO    :   - '/': FilesystemProvider for path 'E:\\mpvKt\\py_remove_store_service\\share_files' (Read-Write)
+22:47:53.844 - WARNING : Basic authentication is enabled: It is highly recommended to enable SSL.
+22:47:53.844 - WARNING : Share '/:dir_browser' will allow anonymous write access.

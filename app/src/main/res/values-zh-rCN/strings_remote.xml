@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 远程存储：列表与标题 -->
+    <string name="remote_profiles_title">远程存储</string>
+    <string name="remote_profiles_summary">已保存的远程连接</string>
+    <string name="remote_browser_title">远程浏览器</string>
+    <string name="remote_add_profile">添加远程存储</string>
+    <string name="remote_edit_profile">编辑远程存储</string>
+    <string name="remote_delete_profile">删除远程连接</string>
+    <!-- 滑动操作面板上的简短按钮标签 -->
+    <string name="remote_action_edit">编辑</string>
+    <string name="remote_action_delete">删除</string>
+    <!-- 删除远程存储的二次确认弹窗文案 -->
+    <string name="remote_delete_confirm_message">确定要删除该远程存储吗？此操作无法撤销。</string>
+    <string name="remote_no_profiles">没有已保存的远程连接。</string>
+
+    <!-- 协议选择 -->
+    <string name="remote_protocol">协议</string>
+    <string name="remote_protocol_ftp">FTP</string>
+    <string name="remote_protocol_sftp">SSH（SFTP）</string>
+    <string name="remote_protocol_smb">SMB</string>
+    <string name="remote_protocol_webdav">WebDAV</string>
+
+    <!-- 编辑器 Tab -->
+    <string name="remote_tab_connection">连接信息</string>
+    <string name="remote_tab_commands">服务器命令片段</string>
+
+    <!-- 命令片段列表与表单 -->
+    <string name="remote_commands_empty">暂无命令片段，点击 + 添加。</string>
+    <string name="remote_command_name">命令名称</string>
+    <string name="remote_command_text">执行命令（多行）</string>
+    <string name="remote_add_command">添加命令</string>
+    <string name="remote_edit_command">编辑命令</string>
+    <string name="remote_delete_command">删除命令</string>
+    <string name="remote_command_port">SSH 命令端口（可选）</string>
+    <string name="remote_command_os_hint">命令将在服务器上直接执行，请根据服务器的操作系统类型（Windows / Linux / macOS）填写对应语法的命令。</string>
+
+    <!-- 命令执行 Toast 反馈 -->
+    <string name="remote_command_success">命令执行成功</string>
+    <string name="remote_command_failed">命令执行失败（退出码 %1$d）</string>
+    <string name="remote_command_error">命令出错：%1$s</string>
+    <!-- 单击命令行后，执行前的二次确认弹窗 -->
+    <string name="remote_execute_confirm_title">执行命令</string>
+    <string name="remote_execute_confirm_message">确定要在服务器上执行命令“%1$s”吗？</string>
+
+    <!-- 连接表单 -->
+    <string name="remote_name">名称</string>
+    <string name="remote_host">主机</string>
+    <string name="remote_port">端口</string>
+    <string name="remote_share">共享名</string>
+    <string name="remote_start_path">起始路径（可选）</string>
+    <string name="remote_username">用户名</string>
+    <string name="remote_domain">域/工作组</string>
+    <string name="remote_password">密码</string>
+    <string name="remote_anonymous">匿名访问</string>
+    <string name="remote_test">测试</string>
+    <string name="remote_save">保存</string>
+    <string name="remote_save_step_connect">正在连接服务器</string>
+    <string name="remote_save_step_authenticate">正在验证凭据</string>
+    <string name="remote_save_step_save">正在保存配置</string>
+    <string name="remote_connection_ok">连接成功</string>
+    <string name="remote_connection_failed">连接失败</string>
+
+    <!-- 排序 -->
+    <string name="remote_sort">排序</string>
+    <string name="remote_sort_current">排序：%1$s</string>
+    <string name="remote_sort_name_asc">文件名（正序）</string>
+    <string name="remote_sort_name_desc">文件名（倒序）</string>
+    <string name="remote_sort_modified_asc">修改时间（最早）</string>
+    <string name="remote_sort_modified_desc">修改时间（最新）</string>
+
+    <!-- 浏览器与错误 -->
+    <string name="remote_profile_not_found">未找到远程配置</string>
+    <string name="remote_unable_access">无法访问远程共享</string>
+    <string name="remote_unable_open">无法打开远程文件</string>
+    <string name="remote_no_shares">未找到可用的共享文件夹。请重试，或手动输入共享名。</string>
+    <string name="remote_retry">重试</string>
+    <string name="remote_enter_share_manually">手动输入共享名</string>
+    <string name="remote_share_name_hint">共享名</string>
+    <string name="remote_open_share">打开</string>
+    <string name="remote_parent_directory">上级目录</string>
+    <string name="remote_native_ad_badge">广告</string>
+
+    <!-- 播放器相关字符串（保留，避免翻译丢失） -->
+    <string name="pref_player_repeat_playlist">重播播放列表</string>
+    <string name="player_sheets_add_remote_sub">添加远程字幕</string>
+    <string name="player_playlist_title">播放列表</string>
+    <string name="player_playlist_empty">播放列表为空</string>
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_profiles_title">Удалённое хранилище</string>
+    <string name="remote_profiles_summary">Сохранённые удалённые подключения</string>
+    <string name="remote_browser_title">Удалённый обозреватель</string>
+    <string name="remote_add_profile">Добавить удалённое хранилище</string>
+    <string name="remote_edit_profile">Изменить удалённое хранилище</string>
+    <string name="remote_delete_profile">Удалить удалённое подключение</string>
+    <string name="remote_no_profiles">Нет сохранённых удалённых подключений.</string>
+    <string name="remote_name">Название</string>
+    <string name="remote_host">Хост</string>
+    <string name="remote_port">Порт</string>
+    <string name="remote_share">Общий ресурс</string>
+    <string name="remote_start_path">Начальный путь (необязательно)</string>
+    <string name="remote_username">Имя пользователя</string>
+    <string name="remote_domain">Домен/рабочая группа</string>
+    <string name="remote_password">Пароль</string>
+    <string name="remote_anonymous">Анонимный доступ</string>
+    <string name="remote_test">Проверить</string>
+    <string name="remote_save">Сохранить</string>
+    <string name="remote_save_step_connect">Подключение к серверу</string>
+    <string name="remote_save_step_authenticate">Проверка учётных данных</string>
+    <string name="remote_save_step_save">Сохранение подключения</string>
+    <string name="remote_connection_ok">подключение успешно</string>
+    <string name="remote_connection_failed">ошибка подключения</string>
+    <string name="remote_sort">Сортировка</string>
+    <string name="remote_sort_current">Сортировка: %1$s</string>
+    <string name="remote_sort_name_asc">Имя (А-Я)</string>
+    <string name="remote_sort_name_desc">Имя (Я-А)</string>
+    <string name="remote_sort_modified_asc">Изменение (сначала старые)</string>
+    <string name="remote_sort_modified_desc">Изменение (сначала новые)</string>
+    <string name="remote_profile_not_found">Удалённый профиль не найден</string>
+    <string name="remote_unable_access">Не удалось открыть удалённый ресурс</string>
+    <string name="remote_unable_open">Не удалось открыть удалённый файл</string>
+    <string name="remote_no_shares">Доступные общие папки не найдены. Повторите попытку или введите имя ресурса вручную.</string>
+    <string name="remote_retry">Повторить</string>
+    <string name="remote_enter_share_manually">Ввести имя ресурса вручную</string>
+    <string name="remote_share_name_hint">Имя ресурса</string>
+    <string name="remote_open_share">Открыть</string>
+    <string name="remote_parent_directory">Родительский каталог</string>
+    <string name="remote_native_ad_badge">Реклама</string>
+    <string name="remote_command_os_hint">Команды выполняются непосредственно на сервере. Приводите синтаксис команды в соответствие с ОС сервера (Windows, Linux или macOS).</string>
+    <string name="pref_player_repeat_playlist">Повторять список воспроизведения</string>
+    <string name="player_sheets_add_remote_sub">Добавить удалённые субтитры</string>
+    <string name="player_playlist_title">Список воспроизведения</string>
+    <string name="player_playlist_empty">Список пуст</string>
+</resources>

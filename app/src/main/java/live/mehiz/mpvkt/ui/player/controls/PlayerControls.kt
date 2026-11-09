@@ -662,8 +662,8 @@ fun PlayerControls(
       sheetShown = sheetShown,
       subtitles = subtitles,
       onAddSubtitle = viewModel::addSubtitle,
-      onPickSmbSubtitle = {
-        activity.launchSmbSubtitlePicker()
+      onPickRemoteSubtitle = {
+        activity.launchRemoteSubtitlePicker()
       },
       onSelectSubtitle = viewModel::selectSub,
       audioTracks = audioTracks,

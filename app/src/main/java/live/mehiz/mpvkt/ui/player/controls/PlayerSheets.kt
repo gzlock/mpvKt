@@ -26,7 +26,7 @@ fun PlayerSheets(
   // subtitles sheet
   subtitles: ImmutableList<TrackNode>,
   onAddSubtitle: (Uri) -> Unit,
-  onPickSmbSubtitle: () -> Unit,
+  onPickRemoteSubtitle: () -> Unit,
   onSelectSubtitle: (Int) -> Unit,
   // audio sheet
   audioTracks: ImmutableList<TrackNode>,
@@ -68,7 +68,7 @@ fun PlayerSheets(
         tracks = subtitles.toImmutableList(),
         onSelect = onSelectSubtitle,
         onAddSubtitle = { subtitlesPicker.launch(arrayOf("*/*")) },
-        onPickSmbSubtitle = onPickSmbSubtitle,
+        onPickRemoteSubtitle = onPickRemoteSubtitle,
         onOpenSubtitleSettings = { onOpenPanel(Panels.SubtitleSettings) },
         onOpenSubtitleDelay = { onOpenPanel(Panels.SubtitleDelay) },
         onDismissRequest = onDismissRequest,
@@ -141,7 +141,7 @@ private fun PlayerSheetsPreview() {
     sheetShown = Sheets.Decoders,
     subtitles = kotlinx.collections.immutable.persistentListOf(),
     onAddSubtitle = {},
-    onPickSmbSubtitle = {},
+    onPickRemoteSubtitle = {},
     onSelectSubtitle = {},
     audioTracks = kotlinx.collections.immutable.persistentListOf(),
     onAddAudio = {},

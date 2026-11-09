@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_profiles_title">リモートストレージ</string>
+    <string name="remote_profiles_summary">保存済みのリモート接続</string>
+    <string name="remote_browser_title">リモートブラウザー</string>
+    <string name="remote_add_profile">リモートストレージを追加</string>
+    <string name="remote_edit_profile">リモートストレージを編集</string>
+    <string name="remote_delete_profile">リモート接続を削除</string>
+    <string name="remote_no_profiles">保存されたリモート接続はありません。</string>
+    <string name="remote_name">名前</string>
+    <string name="remote_host">ホスト</string>
+    <string name="remote_port">ポート</string>
+    <string name="remote_share">共有名</string>
+    <string name="remote_start_path">開始パス（任意）</string>
+    <string name="remote_username">ユーザー名</string>
+    <string name="remote_domain">ドメイン/ワークグループ</string>
+    <string name="remote_password">パスワード</string>
+    <string name="remote_anonymous">匿名アクセス</string>
+    <string name="remote_test">接続テスト</string>
+    <string name="remote_save">保存</string>
+    <string name="remote_save_step_connect">サーバーに接続中</string>
+    <string name="remote_save_step_authenticate">認証情報を確認中</string>
+    <string name="remote_save_step_save">接続を保存中</string>
+    <string name="remote_connection_ok">接続成功</string>
+    <string name="remote_connection_failed">接続失敗</string>
+    <string name="remote_sort">並べ替え</string>
+    <string name="remote_sort_current">並べ替え：%1$s</string>
+    <string name="remote_sort_name_asc">ファイル名（昇順）</string>
+    <string name="remote_sort_name_desc">ファイル名（降順）</string>
+    <string name="remote_sort_modified_asc">更新日時（古い順）</string>
+    <string name="remote_sort_modified_desc">更新日時（新しい順）</string>
+    <string name="remote_profile_not_found">リモートプロファイルが見つかりません</string>
+    <string name="remote_unable_access">リモート共有にアクセスできません</string>
+    <string name="remote_unable_open">リモートファイルを開けません</string>
+    <string name="remote_no_shares">利用可能な共有フォルダーが見つかりません。再試行するか、共有名を手動で入力してください。</string>
+    <string name="remote_retry">再試行</string>
+    <string name="remote_enter_share_manually">共有名を手動で入力</string>
+    <string name="remote_share_name_hint">共有名</string>
+    <string name="remote_open_share">開く</string>
+    <string name="remote_parent_directory">親ディレクトリ</string>
+    <string name="remote_native_ad_badge">広告</string>
+    <string name="remote_command_os_hint">コマンドはサーバー上で直接実行されます。サーバーの OS（Windows / Linux / macOS）に合わせた構文で入力してください。</string>
+    <string name="pref_player_repeat_playlist">プレイリストをリピート</string>
+    <string name="player_sheets_add_remote_sub">リモート字幕を追加</string>
+    <string name="player_playlist_title">プレイリスト</string>
+    <string name="player_playlist_empty">プレイリストは空です</string>
+</resources>

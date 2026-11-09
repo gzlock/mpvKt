@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.presentation.Screen
-import live.mehiz.mpvkt.ui.smb.SmbProfilesScreen
+import live.mehiz.mpvkt.ui.remote.RemoteProfilesScreen
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.preference
@@ -105,11 +105,11 @@ object PreferencesScreen : Screen {
             onClick = { backstack.add(AdvancedPreferencesScreen) }
           )
           preference(
-            key = "smb",
-            title = { Text(stringResource(R.string.smb_profiles_title)) },
-            summary = { Text(stringResource(R.string.smb_profiles_summary)) },
+            key = "remote",
+            title = { Text(stringResource(R.string.remote_profiles_title)) },
+            summary = { Text(stringResource(R.string.remote_profiles_summary)) },
             icon = { Icon(Icons.Outlined.Folder, null) },
-            onClick = { backstack.add(SmbProfilesScreen()) },
+            onClick = { backstack.add(RemoteProfilesScreen()) },
           )
           preference(
             key = "about",

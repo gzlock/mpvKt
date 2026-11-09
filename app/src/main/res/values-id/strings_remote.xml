@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_profiles_title">Penyimpanan jarak jauh</string>
+    <string name="remote_profiles_summary">Koneksi jarak jauh tersimpan</string>
+    <string name="remote_browser_title">Peramban jarak jauh</string>
+    <string name="remote_add_profile">Tambah penyimpanan jarak jauh</string>
+    <string name="remote_edit_profile">Edit penyimpanan jarak jauh</string>
+    <string name="remote_delete_profile">Hapus koneksi jarak jauh</string>
+    <string name="remote_no_profiles">Belum ada koneksi jarak jauh tersimpan.</string>
+    <string name="remote_name">Nama</string>
+    <string name="remote_host">Host</string>
+    <string name="remote_port">Port</string>
+    <string name="remote_share">Berbagi</string>
+    <string name="remote_start_path">Jalur awal (opsional)</string>
+    <string name="remote_username">Nama pengguna</string>
+    <string name="remote_domain">Domain/grup kerja</string>
+    <string name="remote_password">Kata sandi</string>
+    <string name="remote_anonymous">Akses anonim</string>
+    <string name="remote_test">Uji</string>
+    <string name="remote_save">Simpan</string>
+    <string name="remote_save_step_connect">Menghubungkan ke server</string>
+    <string name="remote_save_step_authenticate">Memverifikasi kredensial</string>
+    <string name="remote_save_step_save">Menyimpan koneksi</string>
+    <string name="remote_connection_ok">koneksi berhasil</string>
+    <string name="remote_connection_failed">koneksi gagal</string>
+    <string name="remote_sort">Urutkan</string>
+    <string name="remote_sort_current">Urutkan: %1$s</string>
+    <string name="remote_sort_name_asc">Nama file (A-Z)</string>
+    <string name="remote_sort_name_desc">Nama file (Z-A)</string>
+    <string name="remote_sort_modified_asc">Waktu diubah (terlama)</string>
+    <string name="remote_sort_modified_desc">Waktu diubah (terbaru)</string>
+    <string name="remote_profile_not_found">Profil jarak jauh tidak ditemukan</string>
+    <string name="remote_unable_access">Tidak dapat mengakses berbagi jarak jauh</string>
+    <string name="remote_unable_open">Tidak dapat membuka berkas jarak jauh</string>
+    <string name="remote_no_shares">Folder bersama yang dapat digunakan tidak ditemukan. Coba lagi atau masukkan nama berbagi secara manual.</string>
+    <string name="remote_retry">Coba lagi</string>
+    <string name="remote_enter_share_manually">Masukkan nama berbagi secara manual</string>
+    <string name="remote_share_name_hint">Nama berbagi</string>
+    <string name="remote_open_share">Buka</string>
+    <string name="remote_parent_directory">Direktori induk</string>
+    <string name="remote_native_ad_badge">Iklan</string>
+    <string name="remote_command_os_hint">Perintah dijalankan langsung di server. Sesuaikan sintaks perintah dengan sistem operasi server (Windows, Linux, atau macOS).</string>
+    <string name="pref_player_repeat_playlist">Ulangi daftar putar</string>
+    <string name="player_sheets_add_remote_sub">Tambah subtitle jarak jauh</string>
+    <string name="player_playlist_title">Daftar putar</string>
+    <string name="player_playlist_empty">Daftar putar kosong</string>
+</resources>

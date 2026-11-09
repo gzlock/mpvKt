@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_profiles_title">Armazenamento remoto</string>
+    <string name="remote_profiles_summary">Conexões remotas salvas</string>
+    <string name="remote_browser_title">Navegador remoto</string>
+    <string name="remote_add_profile">Adicionar armazenamento remoto</string>
+    <string name="remote_edit_profile">Editar armazenamento remoto</string>
+    <string name="remote_delete_profile">Excluir conexão remota</string>
+    <string name="remote_no_profiles">Nenhuma conexão remota salva.</string>
+    <string name="remote_name">Nome</string>
+    <string name="remote_host">Host</string>
+    <string name="remote_port">Porta</string>
+    <string name="remote_share">Compartilhamento</string>
+    <string name="remote_start_path">Caminho inicial (opcional)</string>
+    <string name="remote_username">Usuário</string>
+    <string name="remote_domain">Domínio/grupo de trabalho</string>
+    <string name="remote_password">Senha</string>
+    <string name="remote_anonymous">Acesso anônimo</string>
+    <string name="remote_test">Testar</string>
+    <string name="remote_save">Salvar</string>
+    <string name="remote_save_step_connect">Conectando ao servidor</string>
+    <string name="remote_save_step_authenticate">Verificando credenciais</string>
+    <string name="remote_save_step_save">Salvando conexão</string>
+    <string name="remote_connection_ok">conexão bem-sucedida</string>
+    <string name="remote_connection_failed">falha na conexão</string>
+    <string name="remote_sort">Ordenar</string>
+    <string name="remote_sort_current">Ordenar: %1$s</string>
+    <string name="remote_sort_name_asc">Nome (A-Z)</string>
+    <string name="remote_sort_name_desc">Nome (Z-A)</string>
+    <string name="remote_sort_modified_asc">Modificação (mais antigos)</string>
+    <string name="remote_sort_modified_desc">Modificação (mais recentes)</string>
+    <string name="remote_profile_not_found">Perfil remoto não encontrado</string>
+    <string name="remote_unable_access">Não foi possível acessar o compartilhamento remoto</string>
+    <string name="remote_unable_open">Não foi possível abrir o arquivo remoto</string>
+    <string name="remote_no_shares">Nenhuma pasta compartilhada disponível foi encontrada. Tente novamente ou insira manualmente o nome do compartilhamento.</string>
+    <string name="remote_retry">Tentar novamente</string>
+    <string name="remote_enter_share_manually">Inserir manualmente o nome do compartilhamento</string>
+    <string name="remote_share_name_hint">Nome do compartilhamento</string>
+    <string name="remote_open_share">Abrir</string>
+    <string name="remote_parent_directory">Diretório pai</string>
+    <string name="remote_native_ad_badge">Anúncio</string>
+    <string name="remote_command_os_hint">Os comandos são executados diretamente no servidor. Adeque a sintaxe ao sistema operacional do servidor (Windows, Linux ou macOS).</string>
+    <string name="pref_player_repeat_playlist">Repetir lista de reprodução</string>
+    <string name="player_sheets_add_remote_sub">Adicionar legenda remota</string>
+    <string name="player_playlist_title">Lista de reprodução</string>
+    <string name="player_playlist_empty">A lista está vazia</string>
+</resources>

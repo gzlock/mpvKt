@@ -44,7 +44,7 @@
 
 # jcifs-ng needs MD4 (NTLM hash) and AESCMAC (SMB3 signing); these Spis are registered
 # into BouncyCastle by class name and instantiated reflectively, so keep them under R8.
--keep class live.mehiz.mpvkt.network.smb.SmbCrypto$* { *; }
+-keep class live.mehiz.mpvkt.network.remote.SmbCrypto$* { *; }
 
 -keep class is.xyz.mpv.MPV { *; }
 -keep class is.xyz.mpv.BaseMPVView { *; }

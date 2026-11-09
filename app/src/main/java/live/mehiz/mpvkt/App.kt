@@ -10,11 +10,11 @@ import live.mehiz.mpvkt.di.AppModule
 import live.mehiz.mpvkt.di.DatabaseModule
 import live.mehiz.mpvkt.di.FileManagerModule
 import live.mehiz.mpvkt.di.PreferencesModule
-import live.mehiz.mpvkt.network.smb.SmbRuntime
+import live.mehiz.mpvkt.network.remote.RemoteRuntime
 import live.mehiz.mpvkt.presentation.crash.CrashActivity
 import live.mehiz.mpvkt.presentation.crash.GlobalExceptionHandler
-import live.mehiz.mpvkt.ui.smb.thumbnail.SmbThumbnailFetcher
-import live.mehiz.mpvkt.ui.smb.thumbnail.SmbVideoThumbnailKeyer
+import live.mehiz.mpvkt.ui.remote.thumbnail.RemoteThumbnailFetcher
+import live.mehiz.mpvkt.ui.remote.thumbnail.RemoteVideoThumbnailKeyer
 import org.koin.android.ext.koin.androidContext
 import org.koin.androix.startup.KoinStartup
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -36,15 +36,15 @@ class App : Application(), KoinStartup, SingletonImageLoader.Factory {
   }
 
   override fun newImageLoader(context: Context): ImageLoader {
-    val runtime = GlobalContext.get().get<SmbRuntime>()
+    val runtime = GlobalContext.get().get<RemoteRuntime>()
     return ImageLoader.Builder(context)
       .components {
-        add(SmbVideoThumbnailKeyer())
-        add(SmbThumbnailFetcher.Factory(runtime))
+        add(RemoteVideoThumbnailKeyer())
+        add(RemoteThumbnailFetcher.Factory(runtime))
       }
       .diskCache {
         DiskCache.Builder()
-          .directory(cacheDir.resolve("smb_thumbnail_cache"))
+          .directory(cacheDir.resolve("remote_thumbnail_cache"))
           .maxSizeBytes(DISK_CACHE_MAX_BYTES)
           .build()
       }

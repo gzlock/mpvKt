@@ -17,3 +17,11 @@ __pycache__/
 /*.jks
 *.logcat
 .creative-design
+
+# 1. 忽略 multi_files 和 single_file 目录下的所有内容
+py_remove_store_service/share_files/multi_files/*
+py_remove_store_service/share_files/single_file/*
+
+# 2. 例外：不要忽略这两个目录下的 .gitkeep 文件
+!py_remove_store_service/share_files/multi_files/.gitkeep
+!py_remove_store_service/share_files/single_file/.gitkeep

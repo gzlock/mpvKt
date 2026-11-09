@@ -30,7 +30,7 @@ import live.mehiz.mpvkt.preferences.AppearancePreferences
 import live.mehiz.mpvkt.preferences.preference.collectAsState
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.ui.home.HomeScreen
-import live.mehiz.mpvkt.ui.smb.SmbProfilesScreen
+import live.mehiz.mpvkt.ui.remote.RemoteProfilesScreen
 import live.mehiz.mpvkt.ui.theme.DarkMode
 import live.mehiz.mpvkt.ui.theme.MpvKtTheme
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
@@ -56,13 +56,13 @@ class MainActivity : ComponentActivity() {
 
   @Composable
   fun Navigator() {
-    val subtitlePicker = intent.getBooleanExtra(EXTRA_SMB_SUBTITLE_PICKER, false)
+    val subtitlePicker = intent.getBooleanExtra(EXTRA_REMOTE_SUBTITLE_PICKER, false)
     val initialScreen = if (subtitlePicker) {
-      SmbProfilesScreen(
+      RemoteProfilesScreen(
         subtitlePicker = true,
-        initialProfileId = intent.getStringExtra(EXTRA_SMB_PROFILE_ID),
-        initialPath = intent.getStringExtra(EXTRA_SMB_DIRECTORY_PATH),
-        initialShare = intent.getStringExtra(EXTRA_SMB_SHARE),
+        initialProfileId = intent.getStringExtra(EXTRA_REMOTE_PROFILE_ID),
+        initialPath = intent.getStringExtra(EXTRA_REMOTE_DIRECTORY_PATH),
+        initialShare = intent.getStringExtra(EXTRA_REMOTE_SHARE),
       )
     } else {
       HomeScreen
@@ -110,9 +110,9 @@ class MainActivity : ComponentActivity() {
   }
 
   companion object {
-    const val EXTRA_SMB_SUBTITLE_PICKER = "smb_subtitle_picker"
-    const val EXTRA_SMB_PROFILE_ID = "smb_profile_id"
-    const val EXTRA_SMB_DIRECTORY_PATH = "smb_directory_path"
-    const val EXTRA_SMB_SHARE = "smb_share"
+    const val EXTRA_REMOTE_SUBTITLE_PICKER = "smb_subtitle_picker"
+    const val EXTRA_REMOTE_PROFILE_ID = "smb_profile_id"
+    const val EXTRA_REMOTE_DIRECTORY_PATH = "smb_directory_path"
+    const val EXTRA_REMOTE_SHARE = "smb_share"
   }
 }

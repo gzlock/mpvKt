@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 远程存储：列表与标题 -->
+    <string name="remote_profiles_title">Remote storage</string>
+    <string name="remote_profiles_summary">Saved remote connections</string>
+    <string name="remote_browser_title">Remote browser</string>
+    <string name="remote_add_profile">Add remote storage</string>
+    <string name="remote_edit_profile">Edit remote storage</string>
+    <string name="remote_delete_profile">Delete remote connection</string>
+    <!-- 滑动操作面板上的简短按钮标签 -->
+    <string name="remote_action_edit">Edit</string>
+    <string name="remote_action_delete">Delete</string>
+    <!-- 删除远程存储的二次确认弹窗文案 -->
+    <string name="remote_delete_confirm_message">Are you sure you want to delete this remote storage? This action cannot be undone.</string>
+    <string name="remote_no_profiles">No remote connections saved.</string>
+
+    <!-- 协议选择 -->
+    <string name="remote_protocol">Protocol</string>
+    <string name="remote_protocol_ftp">FTP</string>
+    <string name="remote_protocol_sftp">SSH (SFTP)</string>
+    <string name="remote_protocol_smb">SMB</string>
+    <string name="remote_protocol_webdav">WebDAV</string>
+
+    <!-- 编辑器 Tab -->
+    <string name="remote_tab_connection">Connection</string>
+    <string name="remote_tab_commands">Server command snippets</string>
+
+    <!-- 命令片段列表与表单 -->
+    <string name="remote_commands_empty">No command snippets yet. Tap + to add one.</string>
+    <string name="remote_command_name">Command name</string>
+    <string name="remote_command_text">Command (multi-line)</string>
+    <string name="remote_add_command">Add command</string>
+    <string name="remote_edit_command">Edit command</string>
+    <string name="remote_delete_command">Delete command</string>
+    <string name="remote_command_port">SSH command port (optional)</string>
+    <string name="remote_command_os_hint">Commands run directly on the server. Please match the command syntax to the server\'s operating system: Windows, Linux, or macOS.</string>
+
+    <!-- 命令执行 Toast 反馈 -->
+    <string name="remote_command_success">Command executed successfully</string>
+    <string name="remote_command_failed">Command failed (exit code %1$d)</string>
+    <string name="remote_command_error">Command error: %1$s</string>
+    <!-- 单击命令行后，执行前的二次确认弹窗 -->
+    <string name="remote_execute_confirm_title">Execute command</string>
+    <string name="remote_execute_confirm_message">Run the command \"%1$s\" on the server now?</string>
+
+    <!-- 连接表单 -->
+    <string name="remote_name">Name</string>
+    <string name="remote_host">Host</string>
+    <string name="remote_port">Port</string>
+    <string name="remote_share">Share</string>
+    <string name="remote_start_path">Start path (optional)</string>
+    <string name="remote_username">Username</string>
+    <string name="remote_domain">Domain / workgroup</string>
+    <string name="remote_password">Password</string>
+    <string name="remote_anonymous">Anonymous access</string>
+    <string name="remote_test">Test</string>
+    <string name="remote_save">Save</string>
+    <string name="remote_save_step_connect">Connecting to server</string>
+    <string name="remote_save_step_authenticate">Verifying credentials</string>
+    <string name="remote_save_step_save">Saving connection</string>
+    <string name="remote_connection_ok">connection successful</string>
+    <string name="remote_connection_failed">connection failed</string>
+
+    <!-- 排序 -->
+    <string name="remote_sort">Sort</string>
+    <string name="remote_sort_current">Sort: %1$s</string>
+    <string name="remote_sort_name_asc">File name (A–Z)</string>
+    <string name="remote_sort_name_desc">File name (Z–A)</string>
+    <string name="remote_sort_modified_asc">Modified time (oldest)</string>
+    <string name="remote_sort_modified_desc">Modified time (newest)</string>
+
+    <!-- 浏览器与错误 -->
+    <string name="remote_profile_not_found">Remote profile not found</string>
+    <string name="remote_unable_access">Unable to access remote share</string>
+    <string name="remote_unable_open">Unable to open remote file</string>
+    <string name="remote_no_shares">No usable shared folders were found. Retry or enter a share name manually.</string>
+    <string name="remote_retry">Retry</string>
+    <string name="remote_enter_share_manually">Enter share manually</string>
+    <string name="remote_share_name_hint">Share name</string>
+    <string name="remote_open_share">Open</string>
+    <string name="remote_parent_directory">Parent directory</string>
+    <string name="remote_native_ad_badge">Ad</string>
+</resources>

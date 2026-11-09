@@ -1,0 +1,41 @@
+22:47:48 [ftp] FTP 监听 0.0.0.0:10000  根目录=E:\mpvKt\py_remove_store_service\share_files
+22:47:48 [pyftpdlib] concurrency model: async
+22:47:48 [pyftpdlib] masquerade (NAT) address: None
+22:47:48 [pyftpdlib] passive ports: 20000->20009
+22:47:48 [pyftpdlib] >>> starting FTP server on 0.0.0.0:10000, pid=18320 <<<
+22:47:48 [ssh] SSH/SFTP 监听 0.0.0.0:10001  根目录=E:\mpvKt\py_remove_store_service\share_files
+22:47:51 [impacket.smbserver] Config file parsed
+22:47:51 [impacket.smbserver] Config file parsed
+22:47:51 [smb] SMB 监听 0.0.0.0:10002  共享名=share  根目录=E:\mpvKt\py_remove_store_service\share_files
+22:47:53 [webdav] WebDAV 监听 http://0.0.0.0:10003/  根目录=E:\mpvKt\py_remove_store_service\share_files
+22:48:25 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+22:48:25 [paramiko.transport] Auth rejected (none).
+22:48:25 [paramiko.transport] Auth granted (password).
+22:48:38 [paramiko.transport] Connected (version 2.0, client paramiko_5.1.0)
+22:48:38 [paramiko.transport] Auth rejected (publickey).
+22:48:38 [paramiko.transport] Auth granted (password).
+22:48:38 [paramiko.transport] Socket exception: 你的主机中的软件中止了一个已建立的连接。 (10053)
+22:52:23 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+22:52:24 [paramiko.transport] Auth rejected (none).
+22:52:24 [paramiko.transport] Auth granted (password).
+00:21:19 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+00:21:20 [paramiko.transport] Auth rejected (none).
+00:21:20 [paramiko.transport] Auth granted (password).
+00:32:57 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+00:32:58 [paramiko.transport] Auth rejected (none).
+00:32:58 [paramiko.transport] Auth granted (password).
+00:33:21 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+00:33:22 [paramiko.transport] Auth rejected (none).
+00:33:22 [paramiko.transport] Auth granted (password).
+00:37:27 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+00:37:27 [paramiko.transport] Auth rejected (none).
+00:37:27 [paramiko.transport] Auth granted (password).
+00:40:25 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+00:40:26 [paramiko.transport] Auth rejected (none).
+00:40:26 [paramiko.transport] Auth granted (password).
+00:56:38 [paramiko.transport] Connected (version 2.0, client JSCH_0.2.20)
+00:56:39 [paramiko.transport] Auth rejected (none).
+00:56:39 [paramiko.transport] Auth granted (password).
+00:57:18 [pyftpdlib] 192.168.2.2:63855-[] FTP session opened (connect)
+00:57:18 [pyftpdlib] 192.168.2.2:63855-[anonymous] USER 'anonymous' logged in.
+00:57:18 [pyftpdlib] 192.168.2.2:63855-[anonymous] FTP session closed (disconnect).

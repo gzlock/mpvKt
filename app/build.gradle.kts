@@ -43,20 +43,20 @@ extensions.configure<ApplicationExtension> {
     ?: System.getenv("ADMOB_APP_ID")
     ?: "ca-app-pub-3940256099942544~3347511713"
 
-  val debugAdUnitId = localProperties.getProperty("debug_admob_smb_file_browser_ad_unit_id")
-    ?: System.getenv("DEBUG_ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID")
+  val debugAdUnitId = localProperties.getProperty("debug_admob_remote_file_browser_ad_unit_id")
+    ?: System.getenv("DEBUG_ADMOB_REMOTE_FILE_BROWSER_AD_UNIT_ID")
     ?: "ca-app-pub-3940256099942544/2247696110"
 
-  val releaseAdUnitId = localProperties.getProperty("admob_smb_file_browser_ad_unit_id")
-    ?: System.getenv("ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID")
+  val releaseAdUnitId = localProperties.getProperty("admob_remote_file_browser_ad_unit_id")
+    ?: System.getenv("ADMOB_REMOTE_FILE_BROWSER_AD_UNIT_ID")
     ?: "ca-app-pub-3940256099942544/2247696110"
 
   defaultConfig {
     applicationId = "com.gzlock.mpvkt"
     minSdk = 24
     targetSdk = 37
-    versionCode = 18
-    versionName = "0.1.12"
+    versionCode = 19
+    versionName = "0.1.13"
 
     vectorDrawables {
       useSupportLibrary = true
@@ -86,7 +86,7 @@ extensions.configure<ApplicationExtension> {
 
       // 注入 Release 正式 App ID 与 广告单元 ID
       manifestPlaceholders["ADMOB_APP_ID"] = releaseAppId
-      buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$releaseAdUnitId\"")
+      buildConfigField("String", "ADMOB_REMOTE_FILE_BROWSER_AD_UNIT_ID", "\"$releaseAdUnitId\"")
     }
     create("preview") {
       initWith(getByName("release"))
@@ -97,7 +97,7 @@ extensions.configure<ApplicationExtension> {
 
       // Preview 建议使用测试 ID 或专属的 Preview ID，避免正式包 ID 校验失败
       manifestPlaceholders["ADMOB_APP_ID"] = debugAppId
-      buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$debugAdUnitId\"")
+      buildConfigField("String", "ADMOB_REMOTE_FILE_BROWSER_AD_UNIT_ID", "\"$debugAdUnitId\"")
     }
     named("debug") {
       applicationIdSuffix = ".debug"
@@ -105,7 +105,7 @@ extensions.configure<ApplicationExtension> {
 
       // 注入 Debug 专用 App ID 与 广告单元 ID
       manifestPlaceholders["ADMOB_APP_ID"] = debugAppId
-      buildConfigField("String", "ADMOB_SMB_FILE_BROWSER_AD_UNIT_ID", "\"$debugAdUnitId\"")
+      buildConfigField("String", "ADMOB_REMOTE_FILE_BROWSER_AD_UNIT_ID", "\"$debugAdUnitId\"")
     }
   }
   compileOptions {
@@ -203,6 +203,9 @@ dependencies {
   implementation(libs.fsaf)
   implementation(libs.jcifs)
   implementation(libs.smbj)
+  // 多协议远程存储：FTP 使用 commons-net，SFTP/SSH 使用 JSch（mwiede 维护分支）
+  implementation(libs.commons.net)
+  implementation(libs.jsch)
   implementation(libs.gms.play.services.ads)
 }
 
