@@ -32,6 +32,7 @@
     <string name="remote_add_command">添加命令</string>
     <string name="remote_edit_command">编辑命令</string>
     <string name="remote_delete_command">删除命令</string>
+    <string name="remote_delete_command_confirm_message">确定要删除这条命令吗？此操作无法撤销。</string>
     <string name="remote_command_port">SSH 命令端口（可选）</string>
     <string name="remote_command_os_hint">命令将在服务器上直接执行，请根据服务器的操作系统类型（Windows / Linux / macOS）填写对应语法的命令。</string>
 
@@ -86,4 +87,17 @@
     <string name="player_sheets_add_remote_sub">添加远程字幕</string>
     <string name="player_playlist_title">播放列表</string>
     <string name="player_playlist_empty">播放列表为空</string>
+
+    <!-- 网络唤醒（Wake-on-LAN） -->
+    <string name="remote_wake_on_lan">网络唤醒</string>
+    <string name="remote_wol_section">网络唤醒（可选）</string>
+    <string name="remote_wol_mac">MAC 地址</string>
+    <string name="remote_wol_mac_discover">自动发现 MAC</string>
+    <string name="remote_wol_broadcast">广播地址</string>
+    <string name="remote_wol_port">UDP 端口</string>
+    <!-- 已发送，提示用户等待主机启动后再使用 -->
+    <string name="remote_wol_sent">已发送唤醒指令，主机可能需要 30–60 秒启动，请等待一段时间后再使用该远程存储。</string>
+    <string name="remote_wol_mac_missing">尚未配置 MAC 地址，请先编辑该远程存储并填写主机 MAC。</string>
+    <string name="remote_wol_error">网络唤醒失败：%1$s</string>
+    <string name="remote_wol_discover_failed">未能自动发现 MAC，请手动填写。</string>
 </resources>

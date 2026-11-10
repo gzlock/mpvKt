@@ -99,6 +99,11 @@
     <string name="pref_advanced_cleared_fonts_cache">已清除字体缓存</string>
     <string name="pref_advanced_clear_mpv_conf_cache">清除缓存的 mpv 配置</string>
     <string name="pref_advanced_cleared_mpv_conf_cache">已清除缓存的 mpv 配置</string>
+
+    <!-- 远程存储：长按命令菜单的最大条数 -->
+    <string name="pref_remote_command_limit_title">常用命令最大数量</string>
+    <string name="pref_remote_command_limit_summary">远程存储项长按菜单中显示的命令条数</string>
+    <string name="pref_remote_command_limit_value">%1$d 条</string>
     <string name="pref_about_title">关于</string>
     <string name="pref_about_summary">致谢，许可协议</string>
     <string name="pref_about_app_version">应用版本</string>
@@ -150,7 +155,7 @@
     <string name="player_sheets_filters_warning">某些滤镜可能在当前的视频驱动程序上无法正常工作</string>
     <string name="player_sheets_speed_slider_label">速度</string>
     <string name="player_sheets_speed_make_default">设为默认速度</string>
-    <string name="player_sheets_decoder_formatted">%s (%s)</string>
+    <string name="player_sheets_decoder_formatted">%1$s (%2$s)</string>
     <string name="numeric_chooser_value_too_big">数值过大</string>
     <string name="numeric_chooser_value_too_small">数值过小</string>
     <string name="player_sheets_more_title">更多</string>

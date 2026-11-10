@@ -60,6 +60,18 @@ data class RemoteProfile(
    * 为 null 或非正数时回退到 SSH 默认端口 22。SFTP 协议直接使用自身 [port]。
    */
   val commandPort: Int? = null,
+  /**
+   * 网络唤醒（Wake-on-LAN）目标主机的网卡 MAC 地址，支持“:”或“-”分隔。
+   * 为空表示未配置唤醒，长按菜单触发时会提示先在编辑页填写。
+   */
+  val macAddress: String = "",
+  /**
+   * 魔术包的 UDP 广播地址；为空时使用全网广播 255.255.255.255。
+   * 高级用户可改为网段定向广播（如 192.168.1.255）。
+   */
+  val wolBroadcastAddress: String = "",
+  /** 魔术包发送的目标 UDP 端口，默认 9（部分设备使用 7）。 */
+  val wolPort: Int = 9,
 )
 
 /** 该协议是否支持服务器命令片段（仅 SFTP 与 SMB）。 */

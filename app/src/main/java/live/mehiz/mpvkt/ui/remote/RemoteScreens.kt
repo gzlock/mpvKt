@@ -45,9 +45,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -106,14 +109,19 @@ import live.mehiz.mpvkt.network.remote.ProtocolType
 import live.mehiz.mpvkt.network.remote.SmbAuthStage
 import live.mehiz.mpvkt.network.remote.RemoteEntry
 import live.mehiz.mpvkt.network.remote.RemoteBrowserPreferences
+import live.mehiz.mpvkt.network.remote.MacDiscovery
 import live.mehiz.mpvkt.network.remote.RemotePlaylist
 import live.mehiz.mpvkt.network.remote.RemoteProfile
 import live.mehiz.mpvkt.network.remote.RemoteProfileStore
 import live.mehiz.mpvkt.network.remote.RemoteRuntime
 import live.mehiz.mpvkt.network.remote.RemoteSortOrder
+import live.mehiz.mpvkt.network.remote.WakeOnLan
 import live.mehiz.mpvkt.network.remote.supportsCommands
 import live.mehiz.mpvkt.presentation.Screen
+import live.mehiz.mpvkt.presentation.components.ConfirmDialog
+import live.mehiz.mpvkt.preferences.RemotePreferences
 import live.mehiz.mpvkt.preferences.SubtitlesPreferences
+import live.mehiz.mpvkt.preferences.preference.collectAsState as preferenceCollectAsState
 import live.mehiz.mpvkt.ui.player.PlayerActivity
 import live.mehiz.mpvkt.ui.player.subtitleExtensions
 import live.mehiz.mpvkt.ui.player.videoExtensions
@@ -176,6 +184,9 @@ data class RemoteProfilesScreen(
     val context = LocalContext.current
     val store = koinInject<RemoteProfileStore>()
     val runtime = koinInject<RemoteRuntime>()
+    // 长按命令菜单的最大条数，来自设置（默认 3，可选 3/5）。
+    val remotePreferences = koinInject<RemotePreferences>()
+    val commandMenuLimit by remotePreferences.commandMenuLimit.preferenceCollectAsState()
     val loadedProfiles = remember { runCatching { store.getProfiles() } }
     var profiles by remember { mutableStateOf(loadedProfiles.getOrDefault(emptyList())) }
     var message by remember { mutableStateOf(loadedProfiles.exceptionOrNull()?.message) }
@@ -185,6 +196,10 @@ data class RemoteProfilesScreen(
     val cmdSuccessText = stringResource(R.string.remote_command_success)
     val cmdFailedText = stringResource(R.string.remote_command_failed)
     val cmdErrorText = stringResource(R.string.remote_command_error)
+    // 网络唤醒反馈文案：已发送（提示等待）、未配置 MAC、发送异常。
+    val wolSentText = stringResource(R.string.remote_wol_sent)
+    val wolMacMissingText = stringResource(R.string.remote_wol_mac_missing)
+    val wolErrorText = stringResource(R.string.remote_wol_error)
     LaunchedEffect(backstack.size) {
       if (backstack.lastOrNull() is RemoteProfilesScreen) {
         runCatching { store.getProfiles() }
@@ -354,9 +369,9 @@ data class RemoteProfilesScreen(
                             ),
                           )
                         },
-                        // 长按：仅在存在命令片段时弹出命令菜单。
+                        // 长按：弹出快捷菜单（含网络唤醒；即使没有命令片段也可唤醒）。
                         onLongClick = {
-                          if (profile.commandSnippets.isNotEmpty()) menuExpanded = true
+                          menuExpanded = true
                         },
                       )
                       .padding(horizontal = 20.dp, vertical = 14.dp),
@@ -380,22 +395,53 @@ data class RemoteProfilesScreen(
                   val menuOffset = with(density) {
                     DpOffset(pressOffset.x.toDp(), pressOffset.y.toDp())
                   }
-                  // 最多显示 5 条：有执行记录时按最近执行时间倒序；从未执行过则取最后添加的 5 条（保持原序）。
-                  val menuCommands = remember(profile.commandSnippets) {
+                  // 最多显示 N 条（N 取自设置，默认 3）：已执行的按最近执行时间倒序优先展示；
+                  // 不足 N 条时，用最后添加的未执行命令（保持原序）补齐。
+                  val menuCommands = remember(profile.commandSnippets, commandMenuLimit) {
                     val executed = profile.commandSnippets
                       .filter { it.lastExecutedAt != null }
                       .sortedByDescending { it.lastExecutedAt }
-                    if (executed.isNotEmpty()) {
-                      executed.take(5)
-                    } else {
-                      profile.commandSnippets.takeLast(5)
-                    }
+                    val notExecuted = profile.commandSnippets.filter { it.lastExecutedAt == null }
+                    // 需补齐的条数：已执行不足 N 时，取最后添加的若干条未执行命令。
+                    val fillerCount = (commandMenuLimit - executed.size).coerceAtLeast(0)
+                    (executed + notExecuted.takeLast(fillerCount)).take(commandMenuLimit)
                   }
                   DropdownMenu(
                     expanded = menuExpanded,
                     onDismissRequest = { menuExpanded = false },
                     offset = menuOffset,
                   ) {
+                    // 首项：网络唤醒。点击后发送魔术包并 Toast 提示等待，不自动连接。
+                    DropdownMenuItem(
+                      text = { Text(stringResource(R.string.remote_wake_on_lan)) },
+                      leadingIcon = { Icon(Icons.Default.PowerSettingsNew, null) },
+                      onClick = {
+                        menuExpanded = false
+                        // 未配置 MAC 时无法构造魔术包，提示先去编辑页填写。
+                        if (profile.macAddress.isBlank()) {
+                          Toast.makeText(context, wolMacMissingText, Toast.LENGTH_LONG).show()
+                          return@DropdownMenuItem
+                        }
+                        scope.launch {
+                          val result = withContext(Dispatchers.IO) {
+                            runCatching {
+                              WakeOnLan.send(
+                                mac = profile.macAddress,
+                                broadcastAddress = profile.wolBroadcastAddress,
+                                port = profile.wolPort,
+                              )
+                            }
+                          }
+                          val toastText = result.fold(
+                            onSuccess = { wolSentText },
+                            onFailure = { wolErrorText.format(it.message.orEmpty()) },
+                          )
+                          Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
+                        }
+                      },
+                    )
+                    // 网络唤醒与常用命令之间的分隔线；无命令时不显示，避免出现悬空分隔线。
+                    if (menuCommands.isNotEmpty()) HorizontalDivider()
                     menuCommands.forEach { snippet ->
                       DropdownMenuItem(
                         text = { Text(snippet.name) },
@@ -558,6 +604,12 @@ private fun RemoteProfileEditor(
   var anonymous by remember { mutableStateOf(initial?.anonymous ?: false) }
   // SMB 经同主机 SSH 执行命令时使用的端口（文本，空则回退 22）。
   var commandPort by remember { mutableStateOf(initial?.commandPort?.toString().orEmpty()) }
+  // 网络唤醒配置：MAC（可自动发现或手填）、广播地址（空=全网广播）、UDP 端口（默认 9）。
+  var macAddress by remember { mutableStateOf(initial?.macAddress.orEmpty()) }
+  var wolBroadcast by remember { mutableStateOf(initial?.wolBroadcastAddress.orEmpty()) }
+  var wolPort by remember { mutableStateOf(initial?.wolPort?.toString() ?: "9") }
+  // MAC 自动发现进行中标志，用于按钮 loading。
+  var discoveringMac by remember { mutableStateOf(false) }
   // 命令片段列表，可增删改。
   val commandSnippets = remember {
     mutableStateListOf<CommandSnippet>().apply { addAll(initial?.commandSnippets.orEmpty()) }
@@ -577,6 +629,8 @@ private fun RemoteProfileEditor(
   val cmdSuccessText = stringResource(R.string.remote_command_success)
   val cmdFailedText = stringResource(R.string.remote_command_failed)
   val cmdErrorText = stringResource(R.string.remote_command_error)
+  // MAC 自动发现失败时的提示文案。
+  val wolDiscoverFailedText = stringResource(R.string.remote_wol_discover_failed)
   // 该协议是否支持命令片段（仅 SFTP/SMB）。
   val supportsCommands = protocol.supportsCommands()
   // 新建（initial == null）时只显示连接表单；仅在编辑已有存储且协议支持时才显示 Tab 容器。
@@ -596,6 +650,10 @@ private fun RemoteProfileEditor(
     anonymous = anonymous,
     commandSnippets = commandSnippets.toList(),
     commandPort = commandPort.toIntOrNull(),
+    macAddress = macAddress.trim(),
+    wolBroadcastAddress = wolBroadcast.trim(),
+    // 端口非法时回退默认 9，保证保存的数据始终可用。
+    wolPort = wolPort.trim().toIntOrNull()?.takeIf { it in 1..65535 } ?: 9,
   )
 
   /**
@@ -654,6 +712,25 @@ private fun RemoteProfileEditor(
         onFailure = { cmdErrorText.format(it.message.orEmpty()) },
       )
       Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
+    }
+  }
+
+  /**
+   * 根据当前填写的主机地址自动发现 MAC：读取系统 ARP 表，成功则回填输入框，
+   * 失败（主机睡眠/无记录）时 Toast 提示用户手动填写。
+   */
+  fun discoverMac() {
+    if (host.isBlank() || discoveringMac) return
+    scope.launch {
+      discoveringMac = true
+      // 传入当前填写的端口（若合法），优先尝试该端口强制 ARP。
+      val found = MacDiscovery.discover(host, port.toIntOrNull())
+      discoveringMac = false
+      if (found != null) {
+        macAddress = found
+      } else {
+        Toast.makeText(context, wolDiscoverFailedText, Toast.LENGTH_LONG).show()
+      }
     }
   }
 
@@ -729,6 +806,11 @@ private fun RemoteProfileEditor(
                 activeStep = RemoteSaveStep.CONNECT
                 completedSteps = emptySet()
                 scope.launch {
+                  // 保存前若 MAC 为空，尝试自动发现一次：发现到则回填并随本次保存写入，
+                  // 发现不到（主机睡眠/无 ARP 记录）则静默跳过，不阻塞保存流程。
+                  if (macAddress.isBlank() && host.isNotBlank()) {
+                    MacDiscovery.discover(host, port.toIntOrNull())?.let { macAddress = it }
+                  }
                   val failure = runCatching {
                     onSave(profile()) { step ->
                       // Every step before the reported one has finished.
@@ -901,6 +983,51 @@ private fun RemoteProfileEditor(
             androidx.compose.material3.Checkbox(anonymous, { anonymous = it })
             Text(stringResource(R.string.remote_anonymous))
           }
+
+          // 网络唤醒（Wake-on-LAN）配置区，四协议通用。
+          Text(
+            stringResource(R.string.remote_wol_section),
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(top = 8.dp),
+          )
+          // MAC 地址：可手动填写，也可点右侧按钮根据主机 IP 自动发现。
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            OutlinedTextField(
+              macAddress,
+              { macAddress = it },
+              modifier = Modifier.weight(1f),
+              label = { Text(stringResource(R.string.remote_wol_mac)) },
+              singleLine = true,
+              placeholder = { Text("AA:BB:CC:DD:EE:FF") },
+            )
+            // 自动发现中显示转圈，否则显示刷新图标。
+            IconButton(onClick = { discoverMac() }, enabled = !discoveringMac && host.isNotBlank()) {
+              if (discoveringMac) {
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+              } else {
+                Icon(Icons.Default.Refresh, stringResource(R.string.remote_wol_mac_discover))
+              }
+            }
+          }
+          OutlinedTextField(
+            wolBroadcast,
+            { wolBroadcast = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.remote_wol_broadcast)) },
+            singleLine = true,
+            // 留空提示用户默认使用全网广播。
+            placeholder = { Text("255.255.255.255") },
+          )
+          OutlinedTextField(
+            wolPort,
+            { wolPort = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.remote_wol_port)) },
+            singleLine = true,
+          )
         }
       } else {
         // 第二个 Tab：服务器命令片段列表页。
@@ -952,6 +1079,8 @@ private fun CommandSnippetList(
 ) {
   // 待执行的命令：非 null 时弹出确认弹窗。
   var pendingExecute by remember { mutableStateOf<CommandSnippet?>(null) }
+  // 待删除的命令：非 null 时弹出删除确认弹窗，复用通用 ConfirmDialog。
+  var pendingDelete by remember { mutableStateOf<CommandSnippet?>(null) }
   val density = LocalDensity.current
   val rowScope = rememberCoroutineScope()
   Column(Modifier.fillMaxSize()) {
@@ -1009,7 +1138,8 @@ private fun CommandSnippetList(
               SwipeActionButton(
                 onClick = {
                   rowScope.launch { revealState.animateTo(RowRevealState.Settled) }
-                  onDelete(snippet)
+                  // 不直接删除，先弹确认，避免误触。
+                  pendingDelete = snippet
                 },
                 icon = Icons.Default.Delete,
                 label = stringResource(R.string.remote_action_delete),
@@ -1066,6 +1196,18 @@ private fun CommandSnippetList(
           Text(stringResource(android.R.string.cancel))
         }
       },
+    )
+  }
+  // 删除确认弹窗：复用通用 ConfirmDialog，确认后才真正调用 onDelete。
+  pendingDelete?.let { target ->
+    ConfirmDialog(
+      title = stringResource(R.string.remote_delete_command),
+      subtitle = stringResource(R.string.remote_delete_command_confirm_message),
+      onConfirm = {
+        pendingDelete = null
+        onDelete(target)
+      },
+      onCancel = { pendingDelete = null },
     )
   }
 }

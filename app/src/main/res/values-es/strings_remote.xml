@@ -44,4 +44,16 @@
     <string name="player_sheets_add_remote_sub">Añadir subtítulos remotos</string>
     <string name="player_playlist_title">Lista de reproducción</string>
     <string name="player_playlist_empty">La lista está vacía</string>
+
+    <!-- 网络唤醒（Wake-on-LAN） -->
+    <string name="remote_wake_on_lan">Despertar por LAN</string>
+    <string name="remote_wol_section">Despertar por LAN (opcional)</string>
+    <string name="remote_wol_mac">Dirección MAC</string>
+    <string name="remote_wol_mac_discover">Detectar MAC automáticamente</string>
+    <string name="remote_wol_broadcast">Dirección de difusión</string>
+    <string name="remote_wol_port">Puerto UDP</string>
+    <string name="remote_wol_sent">Paquete de activación enviado. El host puede tardar entre 30 y 60 segundos en iniciarse; espera antes de usar este almacenamiento remoto.</string>
+    <string name="remote_wol_mac_missing">No hay dirección MAC configurada. Edita el almacenamiento remoto e introduce primero la MAC del host.</string>
+    <string name="remote_wol_error">Error al despertar por LAN: %1$s</string>
+    <string name="remote_wol_discover_failed">No se pudo detectar la MAC automáticamente. Introdúcela manualmente.</string>
 </resources>

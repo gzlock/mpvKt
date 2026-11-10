@@ -44,4 +44,16 @@
     <string name="player_sheets_add_remote_sub">リモート字幕を追加</string>
     <string name="player_playlist_title">プレイリスト</string>
     <string name="player_playlist_empty">プレイリストは空です</string>
+
+    <!-- 网络唤醒（Wake-on-LAN） -->
+    <string name="remote_wake_on_lan">ネットワーク起動</string>
+    <string name="remote_wol_section">ネットワーク起動（任意）</string>
+    <string name="remote_wol_mac">MAC アドレス</string>
+    <string name="remote_wol_mac_discover">MAC を自動検出</string>
+    <string name="remote_wol_broadcast">ブロードキャストアドレス</string>
+    <string name="remote_wol_port">UDP ポート</string>
+    <string name="remote_wol_sent">起動パケットを送信しました。ホストの起動には 30～60 秒ほどかかる場合があります。このリモートストレージの使用はしばらくお待ちください。</string>
+    <string name="remote_wol_mac_missing">MAC アドレスが設定されていません。先にリモートストレージを編集してホストの MAC を入力してください。</string>
+    <string name="remote_wol_error">ネットワーク起動に失敗しました: %1$s</string>
+    <string name="remote_wol_discover_failed">MAC を自動検出できませんでした。手動で入力してください。</string>
 </resources>

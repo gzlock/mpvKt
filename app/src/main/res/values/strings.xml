@@ -138,6 +138,11 @@
     <string name="pref_advanced_clear_mpv_conf_cache">Clear cached mpv configurations</string>
     <string name="pref_advanced_cleared_mpv_conf_cache">Cleared cached mpv configurations</string>
 
+    <!-- 远程存储：长按命令菜单的最大条数 -->
+    <string name="pref_remote_command_limit_title">Maximum common commands</string>
+    <string name="pref_remote_command_limit_summary">Number of commands shown in the long-press menu for a remote storage item</string>
+    <string name="pref_remote_command_limit_value">%1$d commands</string>
+
 
     <string name="pref_about_title">About</string>
     <string name="pref_about_summary">Acknowledgments, licenses</string>
@@ -216,7 +221,7 @@
     <string name="player_sheets_speed_slider_label">Speed</string>
     <string name="player_sheets_speed_make_default">Make default speed</string>
 
-    <string name="player_sheets_decoder_formatted">%s (%s)</string>
+    <string name="player_sheets_decoder_formatted">%1$s (%2$s)</string>
 
     <string name="numeric_chooser_value_too_big">Value too big</string>
     <string name="numeric_chooser_value_too_small">Value too small</string>

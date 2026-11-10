@@ -44,4 +44,16 @@
     <string name="player_sheets_add_remote_sub">Tambah subtitle jarak jauh</string>
     <string name="player_playlist_title">Daftar putar</string>
     <string name="player_playlist_empty">Daftar putar kosong</string>
+
+    <!-- 网络唤醒（Wake-on-LAN） -->
+    <string name="remote_wake_on_lan">Bangunkan lewat LAN</string>
+    <string name="remote_wol_section">Bangunkan lewat LAN (opsional)</string>
+    <string name="remote_wol_mac">Alamat MAC</string>
+    <string name="remote_wol_mac_discover">Temukan MAC otomatis</string>
+    <string name="remote_wol_broadcast">Alamat siaran</string>
+    <string name="remote_wol_port">Port UDP</string>
+    <string name="remote_wol_sent">Paket bangun telah dikirim. Host mungkin butuh 30–60 detik untuk menyala; harap tunggu sebelum menggunakan penyimpanan remote ini.</string>
+    <string name="remote_wol_mac_missing">Alamat MAC belum dikonfigurasi. Silakan edit penyimpanan remote dan masukkan MAC host terlebih dahulu.</string>
+    <string name="remote_wol_error">Gagal membangunkan lewat LAN: %1$s</string>
+    <string name="remote_wol_discover_failed">MAC tidak ditemukan otomatis. Silakan masukkan secara manual.</string>
 </resources>

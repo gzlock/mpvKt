@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -47,11 +48,13 @@ import kotlinx.serialization.Serializable
 import live.mehiz.mpvkt.R
 import live.mehiz.mpvkt.database.MpvKtDatabase
 import live.mehiz.mpvkt.preferences.AdvancedPreferences
+import live.mehiz.mpvkt.preferences.RemotePreferences
 import live.mehiz.mpvkt.preferences.preference.collectAsState
 import live.mehiz.mpvkt.presentation.Screen
 import live.mehiz.mpvkt.presentation.components.ConfirmDialog
 import live.mehiz.mpvkt.presentation.crash.CrashActivity
 import live.mehiz.mpvkt.ui.utils.LocalBackStack
+import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SwitchPreference
@@ -71,6 +74,7 @@ object AdvancedPreferencesScreen : Screen {
     val context = LocalContext.current
     val backStack = LocalBackStack.current
     val preferences = koinInject<AdvancedPreferences>()
+    val remotePreferences = koinInject<RemotePreferences>()
     val fileManager = koinInject<FileManager>()
     val scope = rememberCoroutineScope()
     Scaffold(
@@ -278,6 +282,22 @@ object AdvancedPreferencesScreen : Screen {
                 context.getString(R.string.pref_advanced_cleared_fonts_cache),
                 Toast.LENGTH_SHORT,
               ).show()
+            },
+          )
+          // 远程存储长按命令菜单的最大条数：默认 3，可选 3、5。
+          val commandLimit by remotePreferences.commandMenuLimit.collectAsState()
+          ListPreference(
+            value = commandLimit,
+            onValueChange = { remotePreferences.commandMenuLimit.set(it) },
+            values = listOf(3, 5),
+            title = { Text(stringResource(R.string.pref_remote_command_limit_title)) },
+            summary = {
+              Text(stringResource(R.string.pref_remote_command_limit_value, commandLimit))
+            },
+            valueToText = { value ->
+              AnnotatedString(
+                stringResource(R.string.pref_remote_command_limit_value, value),
+              )
             },
           )
         }

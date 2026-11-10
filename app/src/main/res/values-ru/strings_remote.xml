@@ -44,4 +44,16 @@
     <string name="player_sheets_add_remote_sub">Добавить удалённые субтитры</string>
     <string name="player_playlist_title">Список воспроизведения</string>
     <string name="player_playlist_empty">Список пуст</string>
+
+    <!-- 网络唤醒（Wake-on-LAN） -->
+    <string name="remote_wake_on_lan">Пробуждение по сети</string>
+    <string name="remote_wol_section">Пробуждение по сети (необязательно)</string>
+    <string name="remote_wol_mac">MAC-адрес</string>
+    <string name="remote_wol_mac_discover">Автоопределение MAC</string>
+    <string name="remote_wol_broadcast">Широковещательный адрес</string>
+    <string name="remote_wol_port">UDP-порт</string>
+    <string name="remote_wol_sent">Пакет пробуждения отправлен. Запуск хоста может занять 30–60 секунд; подождите перед использованием этого удалённого хранилища.</string>
+    <string name="remote_wol_mac_missing">MAC-адрес не настроен. Сначала измените удалённое хранилище и укажите MAC хоста.</string>
+    <string name="remote_wol_error">Не удалось выполнить пробуждение по сети: %1$s</string>
+    <string name="remote_wol_discover_failed">Не удалось автоматически найти MAC. Введите его вручную.</string>
 </resources>

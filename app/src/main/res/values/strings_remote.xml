@@ -32,6 +32,7 @@
     <string name="remote_add_command">Add command</string>
     <string name="remote_edit_command">Edit command</string>
     <string name="remote_delete_command">Delete command</string>
+    <string name="remote_delete_command_confirm_message">Are you sure you want to delete this command? This action cannot be undone.</string>
     <string name="remote_command_port">SSH command port (optional)</string>
     <string name="remote_command_os_hint">Commands run directly on the server. Please match the command syntax to the server\'s operating system: Windows, Linux, or macOS.</string>
 
@@ -80,4 +81,17 @@
     <string name="remote_open_share">Open</string>
     <string name="remote_parent_directory">Parent directory</string>
     <string name="remote_native_ad_badge">Ad</string>
+
+    <!-- 网络唤醒（Wake-on-LAN） -->
+    <string name="remote_wake_on_lan">Wake on LAN</string>
+    <string name="remote_wol_section">Wake on LAN (optional)</string>
+    <string name="remote_wol_mac">MAC address</string>
+    <string name="remote_wol_mac_discover">Auto-discover MAC</string>
+    <string name="remote_wol_broadcast">Broadcast address</string>
+    <string name="remote_wol_port">UDP port</string>
+    <!-- 已发送，提示用户等待主机启动后再使用 -->
+    <string name="remote_wol_sent">Wake-up packet sent. The host may take 30–60 seconds to start; please wait before using this remote storage.</string>
+    <string name="remote_wol_mac_missing">No MAC address configured. Please edit the remote storage and enter the host MAC first.</string>
+    <string name="remote_wol_error">Wake-on-LAN failed: %1$s</string>
+    <string name="remote_wol_discover_failed">MAC not found automatically. Please enter it manually.</string>
 </resources>
