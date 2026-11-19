@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -67,7 +68,8 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -88,11 +90,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.DpOffset
@@ -100,6 +104,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -1349,6 +1354,11 @@ data class RemoteBrowserScreen(
     var loading by remember { mutableStateOf(true) }
     var retryKey by remember { mutableStateOf(0) }
     var isRefreshing by remember { mutableStateOf(false) }
+    // 下拉刷新手感：更远的阈值 + 越过阈值时的震动提示 + 刷新成功后的短暂确认
+    val pullState = rememberPullToRefreshState()
+    val haptics = LocalHapticFeedback.current
+    val pullArmed = rememberRemoteRefreshArmed(pullState, isRefreshing)
+    var justRefreshed by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var manualShareDialogShown by remember { mutableStateOf(false) }
     var manualShareName by remember(profileId, shareName) { mutableStateOf(shareName.orEmpty()) }
@@ -1389,9 +1399,17 @@ data class RemoteBrowserScreen(
     LaunchedEffect(sortOrder) {
       listState.scrollToItem(0)
     }
+    // “已刷新”确认胶囊自动收起
+    LaunchedEffect(justRefreshed) {
+      if (justRefreshed) {
+        delay(RemoteRefreshedBadgeMillis)
+        justRefreshed = false
+      }
+    }
     // Shared loader used by both the initial/button-retry load and pull-to-refresh.
     // A refresh keeps the current list visible and only reports failures via snackbar.
     suspend fun loadContent(isRefresh: Boolean) {
+      val refreshStartedAt = if (isRefresh) SystemClock.elapsedRealtime() else 0L
       if (isRefresh) {
         isRefreshing = true
       } else {
@@ -1422,6 +1440,12 @@ data class RemoteBrowserScreen(
           .onFailure { failureMessage = it.message ?: unableAccessText }
       }
       if (isRefresh) {
+        // “正在刷新”至少可见一小段时间：SMB 列目录经常几十毫秒就返回，
+        // 不补足时长的话转圈会一闪而过，用户无法确认刷新是否真的发生过
+        val elapsed = SystemClock.elapsedRealtime() - refreshStartedAt
+        if (elapsed < RemoteRefreshMinVisibleMillis) {
+          delay(RemoteRefreshMinVisibleMillis - elapsed)
+        }
         isRefreshing = false
         if (failureMessage != null) {
           // Keep the currently visible content (list or error page) and report the
@@ -1430,6 +1454,8 @@ data class RemoteBrowserScreen(
         } else {
           // A successful refresh must clear a previously shown error page.
           error = null
+          // 成功时给出短暂确认，避免“刷新了但列表看起来没变”的不确定感
+          justRefreshed = true
         }
       } else {
         error = failureMessage
@@ -1577,21 +1603,36 @@ data class RemoteBrowserScreen(
         )
       },
     ) { padding ->
-      // 用 Box 作为容器，让加载指示器覆盖在整页中央，而不是被 Column 挤在左上角
+      // 用 Box 作为容器，让加载指示器与下拉刷新提示都覆盖在整页之上
       Box(Modifier
         .fillMaxSize()
         .padding(padding)) {
-        PullToRefreshBox(
-          isRefreshing = isRefreshing,
-          onRefresh = { scope.launch { loadContent(isRefresh = true) } },
-          modifier = Modifier.fillMaxSize(),
+        // 不用 PullToRefreshBox：它的阈值固定为 80dp，无法调远；
+        // 这里直接用 pullToRefresh 修饰符，阈值与自定义指示器共享同一套参数
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .pullToRefresh(
+              isRefreshing = isRefreshing,
+              state = pullState,
+              enabled = !loading && !isRefreshing,
+              threshold = RemoteRefreshThreshold,
+              onRefresh = {
+                if (!isRefreshing) {
+                  // 同步置位，避免松手瞬间指示器先回弹再转为转圈
+                  isRefreshing = true
+                  haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                  scope.launch { loadContent(isRefresh = true) }
+                }
+              },
+            ),
         ) {
           if (!loading) {
             when {
               // Show the real enumeration/authentication error first; the server may deny
               // share listing, but a manually entered share can still be usable.
               error != null -> {
-                // PullToRefreshBox 是 Box，直接放多个子元素会重叠；用 Column 让文字与按钮纵向排列。
+                // 下拉容器是 Box，直接放多个子元素会重叠；用 Column 让文字与按钮纵向排列。
                 Column(Modifier.fillMaxWidth()) {
                   Text(error!!, Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
                   Row(
@@ -1733,6 +1774,20 @@ data class RemoteBrowserScreen(
             }
           }
         }
+        // 自定义下拉刷新指示器：跟随手指下滑，越过阈值后切换为「松开立即刷新」并伴随震动
+        RemoteRefreshIndicator(
+          state = pullState,
+          isRefreshing = isRefreshing,
+          armed = pullArmed,
+          modifier = Modifier.align(Alignment.TopCenter),
+        )
+        // 刷新成功后的短暂确认：列表内容常常不变，没有这条提示用户无法确认是否刷新过
+        RemoteRefreshedBadge(
+          visible = justRefreshed,
+          modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = 12.dp),
+        )
         // 加载中时列表内容为空，指示器居中覆盖在整个内容区域
         if (loading) {
           CircularProgressIndicator(Modifier.align(Alignment.Center))

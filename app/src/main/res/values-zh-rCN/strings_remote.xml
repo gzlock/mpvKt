@@ -82,6 +82,12 @@
     <string name="remote_parent_directory">上级目录</string>
     <string name="remote_native_ad_badge">广告</string>
 
+    <!-- 下拉刷新提示（自定义指示器） -->
+    <string name="remote_refresh_pull">下拉刷新</string>
+    <string name="remote_refresh_release">松开立即刷新</string>
+    <string name="remote_refresh_refreshing">正在刷新…</string>
+    <string name="remote_refreshed">已刷新</string>
+
     <!-- 播放器相关字符串（保留，避免翻译丢失） -->
     <string name="pref_player_repeat_playlist">重播播放列表</string>
     <string name="player_sheets_add_remote_sub">添加远程字幕</string>

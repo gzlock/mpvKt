@@ -82,6 +82,12 @@
     <string name="remote_parent_directory">Parent directory</string>
     <string name="remote_native_ad_badge">Ad</string>
 
+    <!-- 下拉刷新提示（自定义指示器） -->
+    <string name="remote_refresh_pull">Pull to refresh</string>
+    <string name="remote_refresh_release">Release to refresh</string>
+    <string name="remote_refresh_refreshing">Refreshing…</string>
+    <string name="remote_refreshed">Refreshed</string>
+
     <!-- 网络唤醒（Wake-on-LAN） -->
     <string name="remote_wake_on_lan">Wake on LAN</string>
     <string name="remote_wol_section">Wake on LAN (optional)</string>
