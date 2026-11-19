@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  仅对 preview 构建生效的 Manifest 补充。
+
+  preview 构建类型沿用 debug 的测试 App ID 与测试广告单元，同样需要看到 AdMob 原生广告验证工具
+  （native ad validator）的版式校验弹窗，因此把主 Manifest 里的默认值 false 覆盖为 true。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.NATIVE_AD_DEBUGGER_ENABLED"
+            android:value="true"
+            tools:replace="android:value" />
+    </application>
+</manifest>

@@ -1577,12 +1577,10 @@ data class RemoteBrowserScreen(
         )
       },
     ) { padding ->
-      Column(Modifier
+      // 用 Box 作为容器，让加载指示器覆盖在整页中央，而不是被 Column 挤在左上角
+      Box(Modifier
         .fillMaxSize()
         .padding(padding)) {
-        if (loading) {
-          CircularProgressIndicator(Modifier.padding(24.dp))
-        }
         PullToRefreshBox(
           isRefreshing = isRefreshing,
           onRefresh = { scope.launch { loadContent(isRefresh = true) } },
@@ -1734,6 +1732,10 @@ data class RemoteBrowserScreen(
               }
             }
           }
+        }
+        // 加载中时列表内容为空，指示器居中覆盖在整个内容区域
+        if (loading) {
+          CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
       }
     }

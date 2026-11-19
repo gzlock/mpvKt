@@ -22,6 +22,12 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${ADMOB_APP_ID}" />
+        <!-- AdMob 原生广告验证工具（native ad validator）的校验弹窗：主 Manifest 默认关闭。
+             release 即使处于 AdMob 测试模式、展示测试广告，也不会弹出叠加的校验弹窗；
+             debug / preview 的 Manifest 会用 tools:replace 覆盖为 true，保留版式检查。 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.NATIVE_AD_DEBUGGER_ENABLED"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
