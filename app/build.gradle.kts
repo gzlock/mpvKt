@@ -55,8 +55,8 @@ extensions.configure<ApplicationExtension> {
     applicationId = "com.gzlock.mpvkt"
     minSdk = 24
     targetSdk = 37
-    versionCode = 19
-    versionName = "0.1.13"
+    versionCode = 20
+    versionName = "0.1.14"
 
     vectorDrawables {
       useSupportLibrary = true
