@@ -84,6 +84,9 @@ jobs:
             mpvKt-x86-${{ env.VERSION_TAG }}.apk
             mpvKt-x86_64-${{ env.VERSION_TAG }}.apk
           prerelease: false
-          draft: true
+          # 流水线跑完直接发布，不再停在草稿等人工点 Publish
+          draft: false
+          # 按上一个 tag 以来的 PR / commit 自动生成更新说明（追加在 body 之后）
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
